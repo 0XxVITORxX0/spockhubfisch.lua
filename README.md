@@ -1,3 +1,5 @@
+--i learned how to make clean code so now you guys cant call me skids for sus looking code 😜
+
 local FischAPI = {}
 
 local VIM = game:GetService("VirtualInputManager")
@@ -63,13 +65,13 @@ end
 function UI.Initialize()
     --UI
 
-    local Windows = NEVERLOSE:AddWindow("Spock Hub","🌟Spock Hub - Fisch - V0.1.0 - https://discord.gg/EewSkNM6🌟")
+    local Windows = NEVERLOSE:AddWindow("SPOCK HUB","Ronix Hub - Fisch - V0.1.8")
 
     local FishingTab = Windows:AddTab("Fishing", "earth")
 
     local PlayerTab = Windows:AddTab("Player", "earth")
 
-    local ExclusivesTab = Windows:AddTab("FUN", "earth")
+    local ExclusivesTab = Windows:AddTab("Exclusives", "earth")
 
     local Interactions = Windows:AddTab("Interactions", "list")
 
@@ -109,7 +111,7 @@ function UI.Initialize()
 
     local WorldEvents = AreaTeleportsTab:AddSection('World Events', "right")
 
-    local ExclusivesSection = ExclusivesTab:AddSection('FUN', "right")
+    local ExclusivesSection = ExclusivesTab:AddSection('Exclusives', "right")
   
 
     local PlayerSection = PlayerTab:AddSection("Player Modify", "left")
@@ -314,7 +316,7 @@ local WaitForSomeone = RenderStepped.Wait
 
 Convenience:AddButton("Protect Identity", function()
 
-    getgenv().name = "Spock Hub On top"
+    getgenv().name = "discord.gg/ronix on top"
     local Plr = game.Players.LocalPlayer
     for Index, Value in next, game:GetDescendants() do 
         if Value.ClassName == "TextLabel" then 
@@ -837,103 +839,92 @@ ExclusivesSection:AddButton("Auto Heaven Rod", function()
       end)        
 end)
 
-local function fakeDupeFish(times)
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local backpack = LocalPlayer:WaitForChild("Backpack")
-    local tool = character:FindFirstChildOfClass("Tool")
-
-    if tool then
-        for i = 1, times do
-            local toolClone = tool:Clone()
-            toolClone.Parent = backpack
-        end
+local tempthread = nil
+MechanicsSection:AddToggle("INF COINS", false, function(state)
+    if not state then
+        pcall(function() task.cancel(tempthread) end)
+        tempthread = nil
     else
-        Notification:Notify("Failed to Dupe", "Please Hold a fish to Dupe ", 5)
+        tempthread = task.spawn(function() 
+            while task.wait() do 
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()                   game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
+            end 
+        end)
     end
-end
-
-ExclusivesSection:AddButton("Dupe Fish [Visual]", function() 
-fakeDupeFish(math.random(5,10))
-end)
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local l_Stats_0 = ReplicatedStorage:WaitForChild("playerstats"):WaitForChild(LocalPlayer.Name):WaitForChild("Stats")
-local l_debris_0 = require(ReplicatedStorage:WaitForChild("modules"):WaitForChild("fx"):WaitForChild("debris"))
-local l_fx_0 = require(ReplicatedStorage:WaitForChild("modules"):WaitForChild("fx"))
-
-local function comma_value(value)
-    local formatted = tostring(math.ceil(value))
-    repeat
-        formatted, _ = string.gsub(formatted, "^(-?%d+)(%d%d%d)", "%1,%2")
-    until _ == 0
-    return formatted
-end
-
-local function InsertCoin(amount)
-    local l_Value_0 = l_Stats_0:WaitForChild("coins").Value
-    local newValue = l_Value_0 + amount
-
-    local l_NumberValue_0 = Instance.new("NumberValue")
-    l_NumberValue_0.Value = l_Value_0
-
-    game:GetService("TweenService"):Create(l_NumberValue_0, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Value = newValue
-    }):Play()
-
-    l_fx_0:PlaySound(ReplicatedStorage.resources.sounds.sfx.ui.currencygain, game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins, true)
-
-    l_NumberValue_0:GetPropertyChangedSignal("Value"):Connect(function()
-        game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.Text = tostring(comma_value(l_NumberValue_0.Value) .. " C$")
-    end)
-
-    l_debris_0:AddItem(l_NumberValue_0, 0.7)
-
-    if l_Value_0 > newValue then
-        -- Displaying coin loss
-        require(game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins:FindFirstAncestor("hud").Parent:WaitForChild("GeneralUIModule")):ListOnBottomRight(
-            "-" .. comma_value(l_Value_0 - newValue) .. " C$",
-            Color3.fromRGB(212, 62, 62),
-            0
-        )
-        game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.TextColor3 = Color3.fromRGB(212, 62, 62)
-    else
-        -- Displaying coin gain
-        require(game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins:FindFirstAncestor("hud").Parent:WaitForChild("GeneralUIModule")):ListOnBottomRight(
-            "+" .. comma_value(newValue - l_Value_0) .. " C$",
-            Color3.fromRGB(99, 203, 61),
-            0
-        )
-        game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.TextColor3 = Color3.fromRGB(99, 203, 61)
-    end
-
-    -- Flashing effect
-    for i = 1, 2 do
-        task.wait(0.1)
-        game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.TextColor3 = Color3.fromRGB(255, 253, 228)
-        task.wait(0.1)
-        game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.TextColor3 = (l_Value_0 > newValue) and Color3.fromRGB(212, 62, 62) or Color3.fromRGB(99, 203, 61)
-    end
-
-    l_Value_0 = newValue
-    l_Stats_0:WaitForChild("coins").Value = newValue
-    game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.Text = tostring(comma_value(newValue) .. " C$")
-    game:GetService("Players").LocalPlayer.leaderstats["C$"].Value = game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.coins.Text
-end
-
-getgenv().VisualDupCoins = false
-ExclusivesSection:AddToggle("Auto Dupe Coin [Visual]", false, function(toggle)
-getgenv().VisualDupCoins = toggle
-if getgenv().VisualDupCoins then
-while getgenv().VisualDupCoins do
-    local Real3itx = math.random(60000, 105000)
-    InsertCoin(Real3itx)
-    task.wait()
-end
-end
 end)
 
 local CastMode = "Legit"
@@ -1231,10 +1222,10 @@ WorldEvents:AddButton(
         textLabel.Size = UDim2.new(1, 0, 1, 0)
         textLabel.TextScaled = true 
         textLabel.Parent = billboardGui 
-    --spock owner whips us
+    --ronix owner whips us
         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1447.8507080078125, 133.49998474121094, -7649.64501953125)
     end)
--- NO NO STOP SPOCK OWW OWWW!
+-- NO NO STOP RONIX OWW OWWW!
 Teleports:AddButton("Safe Place", function()
     local SafeZone = Instance.new("Part")
     SafeZone.Size = Vector3.new(30, 1, 30)
@@ -1364,11 +1355,11 @@ end)
 		end)
 	end)
 
-    CreditsSection:AddLabel("Fisch Spock Hub Script by !Spock")
+    CreditsSection:AddLabel("Fisch Ronix Hub Script by dynamicarrays, bdokkx")
     CreditsSection:AddButton(
         "Copy Discord Link",
         function()
-            setclipboard("https://discord.gg/EewSkNM6")
+            setclipboard("discord.gg/ronix")
             Notification:Notify("Copied","Copied","Copied discord link to clipboard",4)
         end
     )
@@ -1739,7 +1730,7 @@ function FischAPI.GetFish()
     end
     return Text
 end
---bro bdokkx is a nexam developer / spock hub Arsenal V1.0 - https://discord.gg/EewSkNM6
+--bro bdokkx is a nexam developer / Ronix Arsenal V1.0 - discord.gg/ronix
 --User
 
 function FischUser.CheckForAbundancesInPriorityListAndTakeAction()
@@ -1870,9 +1861,7 @@ function FischUser.AutoCast()
 end
 
 function FischUser.AutoReel()
-    if LocalPlayer.PlayerGui:FindFirstChild("reel") then
     FischAPI.InstantReel()
-    end
 end
 
 function FischUser.StepLoop()
