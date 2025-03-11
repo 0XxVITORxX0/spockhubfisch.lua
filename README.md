@@ -46,7 +46,7 @@ local CalibrationData = {}
 
 local FischUser = {}
 
-local NEVERLOSE = loadstring(game:HttpGet("https://you.whimper.xyz/sources/Ronix/ui.lua"))()
+local NEVERLOSE = loadstring(game:HttpGet("https://you.whimper.xyz/sources/ronix/ui.luas"))()
 
 local Notification = NEVERLOSE.Notification();
 
@@ -1366,7 +1366,7 @@ end)
 		end)
 	end)
 
-    CreditsSection:AddLabel("Fisch Spock Hub Script by dynamicarrays, bdokkx")
+    CreditsSection:AddLabel("Fisch Spock Hub Script by !Spock")
     CreditsSection:AddButton(
         "Copy Discord Link",
         function()
@@ -1741,7 +1741,7 @@ function FischAPI.GetFish()
     end
     return Text
 end
---bro bdokkx is a nexam developer / Spock Arsenal V1.0 - https://discord.gg/EewSkNM6
+--bro bdokkx is a nexam developer / spock hub Arsenal V1.0 - https://discord.gg/EewSkNM6
 --User
 
 function FischUser.CheckForAbundancesInPriorityListAndTakeAction()
