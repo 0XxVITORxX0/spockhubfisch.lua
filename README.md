@@ -1,5 +1,3 @@
---i learned how to make clean code so now you guys cant call me skids for sus looking code 😜
-
 local FischAPI = {}
 
 local VIM = game:GetService("VirtualInputManager")
