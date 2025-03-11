@@ -1,1997 +1,1343 @@
---i learned how to make clean code so now you guys cant call me skids for sus looking code 😜
 
-local FischAPI = {}
 
-local VIM = game:GetService("VirtualInputManager")
-
-local VI = {}
-
-local Options = {
-    AutoShake = false,
-    AutoMinigame = false, --Later version
-    AutoMinigameBlatant = false,
-    AutoCast = false,
-    PerfectCast = false, --Later version
-    WebhookURL = "",
-    WebhookNotifications = false,
-    FloatOnWater = false,
-    Lock = false,
-    MegaladonHunting = false,
-    Priorities={},
-	PriorityWebhook=false,
-	AutoMap=false,
-	AutoTotem=false
+-- Tải Fluent UI Library
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+-- Âm thanh khởi động
+local startupSound = Instance.new("Sound")
+startupSound.SoundId = "rbxassetid://8594342648"
+startupSound.Volume = 5 -- Điều chỉnh âm lượng nếu cần
+startupSound.Looped = false -- Không lặp lại âm thanh
+startupSound.Parent = game.CoreGui-- Đặt parent vào CoreGui để đảm bảo âm thanh phát
+startupSound:Play() -- Phát âm thanh khi script chạy
+-- Tạo cửa sổ chính
+local Window = Library:CreateWindow{
+    Title = "Spock Hub",
+    SubTitle = "https://discord.gg/EewSkNM6",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(1280, 860),
+    Resize = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl -- Phím thu nhỏ
 }
 
-local Internal = {
-    AutoMinigameDownPerUp = 2,
-    AutoMinigameDownPerUpInternal = AutoMinigameDownPerUp,
-    Timer = 301,
-    FloatPart = nil,
-    LockedPosition = nil,
-    MegaladonPosition = nil,
-    Megaladon = false,
-    MegHuntPlat = nil,
-    MegHuntPos = nil,
-	RodToBeEquipped = "",
-	FishHunted = "",
-	Pr = 0,
-}
+-- Tạo ScreenGui chứa nút điều khiển
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ControlGUI"
+screenGui.Parent = game.CoreGui
 
-local Utils = {}
+-- Tạo nút (ImageButton)
+local toggleButton = Instance.new("ImageButton")
+toggleButton.Size = UDim2.new(0, 50, 0, 50) -- Kích thước nhỏ, hình vuông
+toggleButton.Position = UDim2.new(1, -60, 0, 10) -- Vị trí gần góc phải trên
+toggleButton.Image = "rbxassetid://83756310740222" -- Hình ảnh của nút
+toggleButton.BackgroundTransparency = 1 -- Không có nền
+toggleButton.Parent = screenGui
 
-local UI = {}
+-- Biến lưu trạng thái hiển thị Fluent UI
+local isFluentVisible = true
 
-local CalibrationData = {}
+-- Di chuyển nút
+local dragging, dragInput, dragStart, startPos
 
-local FischUser = {}
+local function update(input)
+    local delta = input.Position - dragStart
+    toggleButton.Position = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+end
 
-local NEVERLOSE = loadstring(game:HttpGet("https://you.whimper.xyz/sources/ronix/ui.luas"))()
-
-local Notification = NEVERLOSE.Notification();
-
-NEVERLOSE:Theme("dark")
-
---UI
-
-for Setting, Value in pairs(Options) do
-    if Value == false then
-        UI[Setting] = function(Val)
-            Options[Setting] = Val
-        end
+toggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = toggleButton.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
-end
-
-function UI.Initialize()
-    --UI
-
-    local Windows = NEVERLOSE:AddWindow("SPOCK HUB","Ronix Hub - Fisch - V0.1.8")
-
-    local FishingTab = Windows:AddTab("Fishing", "earth")
-
-    local PlayerTab = Windows:AddTab("Player", "earth")
-
-    local ExclusivesTab = Windows:AddTab("Exclusives", "earth")
-
-    local Interactions = Windows:AddTab("Interactions", "list")
-
-    local AreaTeleportsTab = Windows:AddTab("Area Teleports", "earth")
-
-    local ShopTab = Windows:AddTab("Shop", "earth")
-
-    local MegaladonHunting = Windows:AddTab("Priority List", "earth")
-
-    local WebhookTab = Windows:AddTab("Webhook", "list")
-
-    local SettingsTab = Windows:AddTab('Settings','earth')
-
-    local MechanicsSection = FishingTab:AddSection("Mechanics", "left")
-
-	local FishingSection = FishingTab:AddSection("Fish AutoFarm", "left")
-
-	local FishingSetSection = FishingTab:AddSection("Fish AutoFarm Settings", "left")
-
-    local Convenience = FishingTab:AddSection("Convenience", "left")
-
-    local CreditsSection = FishingTab:AddSection("Credits", "right")
-
-    local Teleports = AreaTeleportsTab:AddSection("Teleports", "left")
-
-    local Treasure = AreaTeleportsTab:AddSection("Treasure", "right")
-
-    local Actions = Interactions:AddSection("Actions", "left")
-
-    local WebhookSection = WebhookTab:AddSection("Webhook", "left")
-
-    local ShopSection = ShopTab:AddSection("Shop All", "left")
-
-    local SellerSection = FishingTab:AddSection("Seller", "left")
-
-    local TotemsSection = AreaTeleportsTab:AddSection("Totems", "left")
-
-    local WorldEvents = AreaTeleportsTab:AddSection('World Events', "right")
-
-    local ExclusivesSection = ExclusivesTab:AddSection('Exclusives', "right")
-  
-
-    local PlayerSection = PlayerTab:AddSection("Player Modify", "left")
-
-    local MiscSection = PlayerTab:AddSection("Misc Player", "right")
-
-    local SettingsSection = SettingsTab:AddSection("Settings", "right")
-    
-    SellerSection:AddButton("Sell All",  FischUser.Sell)
-
-    Convenience:AddToggle("Float On Water", false, UI.FloatOnWater)
-
-    Convenience:AddLabel("Turn ON to walk around and choose spot.")
-    
-	Convenience:AddToggle("Auto Totem Use", false, UI.AutoTotem)
-
-	Convenience:AddToggle("Auto TP To Treasure Map", false, UI.AutoMap)
-
-Treasure:AddToggle("Teleport to Jack Marrow", false, function()
-    local Player = game.Players.LocalPlayer
-    local HumanoidRootPart = Player.Character:WaitForChild("HumanoidRootPart")
-    HumanoidRootPart.CFrame = CFrame.new(-2824.359, 214.311, 1518.130)
 end)
-local NpcFolder = Workspace:FindFirstChild("world"):WaitForChild("npcs")
 
-function rememberPosition()
-    spawn(function()
-        local initialCFrame = HumanoidRootPart.CFrame
- 
-        local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-        bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bodyVelocity.Parent = HumanoidRootPart
- 
-        local bodyGyro = Instance.new("BodyGyro")
-        bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-        bodyGyro.D = 100
-        bodyGyro.P = 10000
-        bodyGyro.CFrame = initialCFrame
-        bodyGyro.Parent = HumanoidRootPart
- 
-        while AutoFreeze do
-            HumanoidRootPart.CFrame = initialCFrame
-            task.wait(0.01)
-        end
-        if bodyVelocity then
-            bodyVelocity:Destroy()
-        end
-        if bodyGyro then
-            bodyGyro:Destroy()
-        end
-    end)
-end
-SellerSection:AddButton("Sell Fish (In Hand)", false, function()
-        local currentPosition = HumanoidRootPart.CFrame
-        local sellPosition = CFrame.new(464, 151, 232)
-        local wasAutoFreezeActive = false
-        if AutoFreeze then
-            wasAutoFreezeActive = true
-            AutoFreeze = false
-        end
-        HumanoidRootPart.CFrame = sellPosition
-        task.wait(0.5)
-        workspace:WaitForChild("world"):WaitForChild("npcs"):WaitForChild("Marc Merchant"):WaitForChild("merchant"):WaitForChild("sell"):InvokeServer()
-        task.wait(1)
-        HumanoidRootPart.CFrame = currentPosition
-        if wasAutoFreezeActive then
-            AutoFreeze = true
-            rememberPosition()
-        end
-    end)
+toggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
 
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        update(input)
+    end
+end)
 
-local LocalPlayer = game.Players.LocalPlayer
-local PlayerGui = LocalPlayer.PlayerGui
+-- Ẩn/Hiện Fluent UI khi nhấn nút
+toggleButton.MouseButton1Click:Connect(function()
+    isFluentVisible = not isFluentVisible
 
-Convenience :AddButton("Show Ui Buy Boat", function()
-    if PlayerGui and PlayerGui:FindFirstChild("hud") and PlayerGui.hud:FindFirstChild("safezone") and PlayerGui.hud.safezone:FindFirstChild("shipwright") then
-        PlayerGui.hud.safezone.shipwright.Visible = not PlayerGui.hud.safezone.shipwright.Visible
+    if isFluentVisible then
+        -- Hiện Fluent UI
+        Window:Minimize(false) -- Mở lại cửa sổ
     else
-        print("Error: Could not find the necessary UI elements.")
+        -- Ẩn Fluent UI
+        Window:Minimize(true) -- Thu nhỏ cửa sổ
     end
 end)
-FishingSection:AddToggle("Auto Reel (Blatant)", false, UI.AutoMinigameBlatant)
-Treasure:AddToggle("Repair Map", false, function()
-    local Player = game.Players.LocalPlayer
-    for _, v in pairs(Player.Backpack:GetChildren()) do
-        if v.Name == "Treasure Map" then
-            Player.Character.Humanoid:EquipTool(v)
-            workspace.world.npcs["Jack Marrow"].treasure.repairmap:InvokeServer()
+
+-- Tạo các tab
+local MainTab = Window:AddTab({ Title = "Main", Icon = "" })
+local PlayerTab = Window:AddTab({ Title = "Player", Icon = "" })
+local IslandTab = Window:AddTab({ Title = "Đảo 🏝️", Icon = "" })
+local OtherTab = Window:AddTab({ Title = "Khác", Icon = "" })
+local FruitTab = Window:AddTab({ Title = "Fruit", Icon = "" }) -- Tab Fruit mới
+
+-- Biến toàn cục
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Fluent = Library -- Gán biến Fluent
+
+local currentTween = nil
+local leviathanGateConnection = nil
+local rockConnection = nil -- No longer used for DescendantAdded
+local scriptEnabled = false
+local lockHeightMode = true
+local destroyRockMode = false
+local customY = 100
+local tweenSpeed = 350
+local minimized = false
+local lastBoat, lastSeat = nil, nil
+local playerTweening = false -- Khôi phục biến playerTweening
+local autoReturnEnabled = false
+local killAuraEnabled = false
+local killAuraRange = 100
+local selectedIslandCoord = nil
+local islandTweening = false
+local boatProtectEnabled = false -- Bảo vệ thuyền
+local boatProtectImmediateEnabled = false -- Bảo vệ thuyền ngay lập tức
+local boatProtectTween = nil
+local boatProtectConnection = nil
+local originalBoatProtectY = nil
+local currentBoat = nil
+_G.Random_Auto = false -- Auto Random Fruit
+local selectedPlayer = nil -- Biến lưu player được chọn cho Spectate và Tween Player
+local playerTweenInfo = nil
+local rockTouchConnection = nil -- Biến connection cho sự kiện chạm đá
+
+-- Danh sách đảo
+local islands = {
+    Tiki = Vector3.new(-16208.6, 10.4, 500.9),
+    Hydra = Vector3.new(5164.5, 48.1, 2094.1),
+    ["Pháo đài"] = Vector3.new(-5122.9, 315.7, -2961.9),
+    ["Dinh Thự"] = Vector3.new(-12551.5, 338.5, -7552.3),
+    ["Lâu Đài Bóng Tối"] = Vector3.new(-9508.9, 158.4, 4894.1),
+    ["Cảng"] = Vector3.new(-221.3, 22.3, 5517.8),
+    ["Cây Đại Thụ"] = Vector3.new(2130.8, 23.1, -6635.9),
+    ["Đảo Bánh"] = Vector3.new(-1928.6, 15.1, -11582.4)
+}
+
+-- Hàm hỗ trợ
+local function setBoatNoClip(boat, enable)
+    for _, desc in ipairs(boat:GetDescendants()) do
+        if desc:IsA("BasePart") then
+            desc.CanCollide = not enable
         end
     end
-end)
-FishingSection:AddToggle("Auto Cast", false, UI.AutoCast)
-Treasure:AddToggle("Collect Treasure", false, function()
-    for _, v in ipairs(game:GetService("Workspace"):GetDescendants()) do
-        if v.ClassName == "ProximityPrompt" then
-            v.HoldDuration = 0
+end
+
+local function setPlayerNoClip(char, enable)
+    for _, desc in ipairs(char:GetDescendants()) do
+        if desc:IsA("BasePart") then
+            desc.CanCollide = not enable
         end
+    end
+end
+
+local function getBoatVehicleSeat()
+    local boatsFolder = Workspace:FindFirstChild("Boats")
+    if not boatsFolder then return nil, nil end
+
+    for _, boat in ipairs(boatsFolder:GetChildren()) do
+        local seat = boat:FindFirstChild("VehicleSeat")
+        if seat and seat.Occupant and seat.Occupant.Parent == LocalPlayer.Character then
+            return boat, seat
+        end
+    end
+    return nil, nil
+end
+
+local function stopTween(reason)
+    if currentTween then
+        currentTween:Cancel()
+        currentTween = nil
+        print(reason or "Tween dừng.")
+    end
+    if leviathanGateConnection then
+        leviathanGateConnection:Disconnect()
+        leviathanGateConnection = nil
+    end
+    if playerTweenInfo then
+        playerTweenInfo:Cancel()
+        playerTweenInfo = nil
+    end
+    scriptEnabled = false
+    playerTweening = false
+    islandTweening = false
+    local boat, _ = getBoatVehicleSeat()
+    if boat then
+        setBoatNoClip(boat, false)
+    end
+    if LocalPlayer.Character then
+        setPlayerNoClip(LocalPlayer.Character, false)
+    end
+    stopBoatProtect() -- Dừng bảo vệ thuyền khi tween dừng
+    setRockDestruction(false) -- Ensure rock destruction is off when tween is stopped
+end
+
+local function stopIfMapObjectAppears(child)
+    if child.Name == "LeviathanGate" then
+        stopTween("LeviathanGate xuất hiện.")
+    elseif child.Name == "PrehistoricIsland" then
+        stopTween("PrehistoricIsland xuất hiện.")
+    end
+end
+
+local function checkLeaveBoat()
+    local _, seat = getBoatVehicleSeat()
+    if not seat then
+        stopTween("Bạn đã rời thuyền.")
+    end
+end
+
+local function tweenBoatToVector3(targetPos)
+    -- Nếu đang tween => dừng cũ
+    if currentTween then
+        stopTween("Dừng tween cũ.")
+    end
+    local boat, seat = getBoatVehicleSeat()
+    if not boat then
+        warn("Không tìm thấy thuyền bạn đang ngồi!")
+        return
+    end
+    lastBoat, lastSeat = boat, seat
+    currentBoat = boat -- Cập nhật thuyền hiện tại cho bảo vệ thuyền
+
+    local primary = boat.PrimaryPart
+    if not primary then
+        warn("Thuyền không có PrimaryPart!")
+        return
     end
 
-    for _, v in pairs(workspace.world.chests:GetDescendants()) do
-        if v:IsA("Part") and v:FindFirstChild("ChestSetup") then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = v.CFrame
-            for _, prompt in pairs(workspace.world.chests:GetDescendants()) do
-                if prompt.Name == "ProximityPrompt" then
-                    fireproximityprompt(prompt)
+    -- Bật no clip
+    setBoatNoClip(boat, true)
+    if LocalPlayer.Character then
+        setPlayerNoClip(LocalPlayer.Character, true)
+    end
+
+    local currentPos = primary.Position
+    local finalY = lockHeightMode and customY or currentPos.Y
+    if lockHeightMode then
+        primary.CFrame = CFrame.new(currentPos.X, finalY, currentPos.Z)
+    end
+
+    local distance = (Vector3.new(targetPos.X, finalY, targetPos.Z) - primary.Position).Magnitude
+    local tweenTime = distance / tweenSpeed
+
+    local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local goal = { CFrame = CFrame.new(targetPos.X, finalY, targetPos.Z) }
+
+    currentTween = TweenService:Create(primary, tweenInfo, goal)
+    currentTween:Play()
+
+    task.spawn(function()
+        while currentTween and currentTween.PlaybackState == Enum.PlaybackState.Playing do
+            checkLeaveBoat()
+            task.wait(0.1)
+        end
+        -- Khi tween xong => tắt no clip
+        setBoatNoClip(boat, false)
+        if LocalPlayer.Character then
+            setPlayerNoClip(LocalPlayer.Character, false)
+        end
+        islandTweening = false
+        currentBoat = nil -- Reset thuyền hiện tại khi tween xong
+    end)
+
+    -- Theo dõi LeviathanGate/PrehistoricIsland
+    if leviathanGateConnection then
+        leviathanGateConnection:Disconnect()
+    end
+    leviathanGateConnection = Workspace:WaitForChild("Map").ChildAdded:Connect(stopIfMapObjectAppears)
+end
+
+-- Hàm Tween thuyền đến player
+local function tweenBoatToPlayer(targetPlayer)
+    if playerTweening then
+        warn("Đang Tween đến player khác, hãy STOP trước.")
+        return
+    end
+    playerTweening = true
+
+    -- Nếu đang tween => dừng cũ
+    if currentTween then
+        stopTween("Dừng tween cũ.")
+    end
+
+    local boat, seat = getBoatVehicleSeat()
+    if not boat then
+        warn("Không tìm thấy thuyền đang ngồi!")
+        playerTweening = false
+        return
+    end
+    lastBoat, lastSeat = boat, seat
+
+    local primary = boat.PrimaryPart
+    if not primary then
+        warn("Thuyền không có PrimaryPart!")
+        playerTweening = false
+        return
+    end
+
+    -- Bật no clip
+    setBoatNoClip(boat, true)
+    if LocalPlayer.Character then
+        setPlayerNoClip(LocalPlayer.Character, true)
+    end
+
+    local char = targetPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then
+        warn("Player chưa load xong hoặc không có HRP!")
+        playerTweening = false
+        -- Tắt no clip
+        setBoatNoClip(boat, false)
+        if LocalPlayer.Character then
+            setPlayerNoClip(LocalPlayer.Character, false)
+        end
+        return
+    end
+
+    local playerPos = char.HumanoidRootPart.Position
+    local currentPos = primary.Position
+    local finalY = lockHeightMode and customY or currentPos.Y
+    if lockHeightMode then
+        primary.CFrame = CFrame.new(currentPos.X, finalY, currentPos.Z)
+    end
+
+    local distance = (Vector3.new(playerPos.X, finalY, playerPos.Z) - primary.Position).Magnitude
+    local tweenTime = distance / tweenSpeed
+
+    local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local goal = { CFrame = CFrame.new(playerPos.X, finalY, playerPos.Z) }
+
+    playerTweenInfo = TweenService:Create(primary, tweenInfo, goal)
+    playerTweenInfo:Play()
+
+    task.spawn(function()
+        while playerTweenInfo and playerTweenInfo.PlaybackState == Enum.PlaybackState.Playing do
+            checkLeaveBoat()
+            task.wait(0.1)
+        end
+        -- Tắt no clip
+        setBoatNoClip(boat, false)
+        if LocalPlayer.Character then
+            setPlayerNoClip(LocalPlayer.Character, false)
+        end
+        playerTweening = false
+    end)
+
+    if leviathanGateConnection then
+        leviathanGateConnection:Disconnect()
+    end
+    leviathanGateConnection = Workspace:WaitForChild("Map").ChildAdded:Connect(stopIfMapObjectAppears)
+end
+
+-- Hàm Auto Return
+local function autoReturnCheck()
+    while autoReturnEnabled do
+        if lastBoat and lastSeat and lastBoat.Parent then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local seatPos = lastSeat.Position
+                local distance = (hrp.Position - seatPos).Magnitude
+                if distance > 10 then
+                    local speed = 300
+                    local time = distance / speed
+
+                    local info = TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+                    local goal = { CFrame = CFrame.new(seatPos + Vector3.new(0,3,0)) }
+                    local tween = TweenService:Create(hrp, info, goal)
+                    tween:Play()
                 end
             end
-            task.wait(1)
         end
+        task.wait(1)
     end
-end)
+end
 
-PlayerSection:AddToggle("Walk On Water", false, function(Value)
-    local WalkZone = "Ocean" 
+-- Hàm Kill Aura
+local function killAuraLoop()
+    local monstersFolder = Workspace:FindFirstChild("Enemies")
+    while killAuraEnabled do
+        task.wait(1)
+        local char = LocalPlayer.Character
+        if not char then continue end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp or not monstersFolder then continue end
 
-    if Value then
-
-        for _, v in pairs(workspace.zones.fishing:GetChildren()) do
-            if v.Name == WalkZone then
-                v.CanCollide = true
+        for _, monster in pairs(monstersFolder:GetChildren()) do
+            local hum = monster:FindFirstChild("Humanoid")
+            local mrp = monster:FindFirstChild("HumanoidRootPart")
+            if hum and mrp and hum.Health > 0 then
+                local distance = (mrp.Position - hrp.Position).Magnitude
+                if distance <= killAuraRange then
+                    hum.Health = 0
+                end
             end
-            if v.Name == "Deep Ocean" and WalkZone == "Ocean" then
-                v.CanCollide = true
-            end
-        end
-    else
---bro bdokkx is so sigma!
-        for _, v in pairs(workspace.zones.fishing:GetChildren()) do
-            if v.Name == WalkZone then
-                v.CanCollide = false
-            end
-            if v.Name == "Deep Ocean" and WalkZone == "Ocean" then
-                v.CanCollide = false
-            end
-        end
-    end
-end)
-
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
-
-local oldpos = HumanoidRootPart.CFrame
-local FreezePlayer = false 
-
-local function FreezeCharacter()
-    while FreezePlayer do
-        task.wait()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = oldpos
         end
     end
 end
 
+-- Hàm Anti Die
+local antiDieEnabled = false
+local originalPosition = nil
+local teleporting = false
+local function teleportPlayerUp()
+    while antiDieEnabled and teleporting do
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local hrp = character.HumanoidRootPart
+            hrp.CFrame = hrp.CFrame + Vector3.new(0, 200, 0) -- Teleport lên 200 studs
+        end
+        task.wait(0.1) -- Lặp lại sau mỗi 0.1 giây
+    end
+end
 
-PlayerSection:AddToggle("Freeze Player", false, function(Value)
-    FreezePlayer = Value
-    if FreezePlayer then
-        oldpos = HumanoidRootPart.CFrame
-        task.spawn(FreezeCharacter)
-        print("Player freezing enabled.")
-    else
-        print("Player freezing disabled.")
+local function checkHealth()
+    while antiDieEnabled do
+        local character = LocalPlayer.Character
+        if character and character:FindFirstChild("Humanoid") then
+            local humanoid = character.Humanoid
+            if humanoid.Health == 0 then
+                teleporting = false
+            elseif humanoid.Health <= (humanoid.MaxHealth * 0.3) then
+                if not teleporting then
+                    teleporting = true
+                    originalPosition = character.HumanoidRootPart.Position -- Lưu vị trí cũ
+                    teleportPlayerUp() -- Bắt đầu teleport lên trời
+                end
+            else
+                if teleporting then
+                    if originalPosition then
+                        local hrp = character:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            hrp.CFrame = CFrame.new(originalPosition)
+                        end
+                        originalPosition = nil
+                    end
+                    teleporting = false -- Dừng teleport nếu HP > 30%
+                end
+            end
+        end
+        task.wait(0.1) -- Kiểm tra HP mỗi 0.1 giây
+    end
+end
+
+-- Hàm DashNoCD
+_G.DodgewithoutCool = false
+local dashNoCDEnabled = false
+local function NoCooldown()
+    if _G.DodgewithoutCool then
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait() -- Chờ nhân vật được load.
+
+        -- Đảm bảo chờ 1 giây sau khi respawn
+        wait(3)
+
+        for i, v in next, getgc() do
+            if typeof(v) == "function" then
+                if getfenv(v).script == character:WaitForChild("Dodge") then
+                    for i2, v2 in next, getupvalues(v) do
+                        if tostring(v2) == "0.4" then -- Giá trị cooldown gốc.
+                            repeat
+                                wait(0.1) -- Kiểm tra cooldown liên tục.
+                                setupvalue(v, i2, 0) -- Đặt cooldown thành 0.
+                            until not _G.DodgewithoutCool
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Hàm WalkSpeed
+local hb = game:GetService("RunService").Heartbeat
+local speaker = game:GetService("Players").LocalPlayer
+local tpwalking = false
+local currentSpeed = 90  -- Mặc định ban đầu là 90
+local walkSpeedEnabled = false
+local function startTeleportWalk(character)
+    local hum = character:WaitForChild("Humanoid")
+
+    -- Lắng nghe sự kiện thay đổi máu
+    hum.HealthChanged:Connect(function(health)
+        local maxHealth = hum.MaxHealth
+        local hpPercent = (health / maxHealth) * 100
+        if hpPercent <= 30 then
+            currentSpeed = 190
+        elseif hpPercent >= 50 then
+            currentSpeed = 90
+        end
+        -- Nếu muốn có thêm logic cho mức 30%-50% thì thêm vào đây
+    end)
+
+    while tpwalking and hum and hum.Parent do
+        local delta = hb:Wait()
+        if hum.MoveDirection.Magnitude > 0 then
+            character:TranslateBy(hum.MoveDirection * currentSpeed * delta)
+        end
+    end
+end
+
+-- Lắng nghe sự kiện nhân vật tái sinh
+speaker.CharacterAdded:Connect(function(character)
+    if tpwalking then
+        startTeleportWalk(character)
     end
 end)
 
+-- Nếu nhân vật đã tồn tại, chạy ngay lập tức
+if speaker.Character and tpwalking then
+    startTeleportWalk(speaker.Character)
+end
 
-
-
---also i just uhh dont ask :skull got mad so i put everything and it works
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser")
-local HttpService = game:GetService("HttpService")
-local GuiService = game:GetService("GuiService")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
+-- Hàm Gas
 local Players = game:GetService("Players")
-local CoreGui = game:GetService('StarterGui')
-local ContextActionService = game:GetService('ContextActionService')
-local UserInputService = game:GetService('UserInputService')
+local StarterGui = game:GetService("StarterGui")
 
-local LocalPlayer = Players.LocalPlayer
-local LocalCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = LocalCharacter:FindFirstChild("HumanoidRootPart")
-local UserPlayer = HumanoidRootPart:WaitForChild("user")
-local ActiveFolder = Workspace:FindFirstChild("active")
-local FishingZonesFolder = Workspace:FindFirstChild("zones"):WaitForChild("fishing")
-local TpSpotsFolder = Workspace:FindFirstChild("world"):WaitForChild("spawns"):WaitForChild("TpSpots")
-local NpcFolder = Workspace:FindFirstChild("world"):WaitForChild("npcs")
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-local screenGui = Instance.new("ScreenGui", PlayerGui)
-local shadowCountLabel = Instance.new("TextLabel", screenGui)
-local RenderStepped = RunService.RenderStepped
-local WaitForSomeone = RenderStepped.Wait
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local toggleNoCooldown = false
+local gasEnabled = false
 
-Convenience:AddButton("Protect Identity", function()
+-- Hàm hiển thị thông báo
+local function notify(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title;
+        Text = text;
+        Duration = 3; -- Thời gian hiển thị thông báo
+    })
+end
 
-    getgenv().name = "discord.gg/ronix on top"
-    local Plr = game.Players.LocalPlayer
-    for Index, Value in next, game:GetDescendants() do 
-        if Value.ClassName == "TextLabel" then 
-            local has = string.find(Value.Text,Plr.Name) 
-            if has then 
-                local str = Value.Text:gsub(Plr.Name,name)
-                Value.Text = str 
-            end
-            Value:GetPropertyChangedSignal("Text"):Connect(function()
-                local str = Value.Text:gsub(Plr.Name,name)
-                Value.Text = str 
-            end)
-        end
+-- Hàm tạo Tool và cài đặt toggle
+local function createNoCooldownTool()
+    local backpack = player:FindFirstChild("Backpack")
+    if not backpack then
+        return
     end
-    game.DescendantAdded:Connect(function(Value)
-        if Value.ClassName == "TextLabel" then 
-            local has = string.find(Value.Text,Plr.Name)
-            Value:GetPropertyChangedSignal("Text"):Connect(function()
-                local str = Value.Text:gsub(Plr.Name,name)
-                Value.Text = str 
-            end)
-            if has then 
-                local str = Value.Text:gsub(Plr.Name,name)
-                Value.Text = str 
-            end
-     
+
+    -- Kiểm tra nếu Tool đã tồn tại, nếu có thì xóa trước
+    local oldTool = backpack:FindFirstChild("NoCooldownToggle")
+    if oldTool then
+        oldTool:Destroy()
+    end
+
+    -- Tạo Tool
+    local tool = Instance.new("Tool")
+    tool.Name = "NoCooldownToggle"
+    tool.RequiresHandle = false
+    tool.CanBeDropped = false
+    tool.Parent = backpack
+
+    -- Khi Tool được nhấn (Activated), bật/tắt tính năng NoCooldown
+    tool.Activated:Connect(function()
+        toggleNoCooldown = not toggleNoCooldown
+        if toggleNoCooldown then
+            notify("No Cooldown M1", "Enabled")
+        else
+            notify("No Cooldown M1", "Disabled")
         end
     end)
-    if UserPlayer:FindFirstChild("streak") then UserPlayer.streak.Text = "HIDDEN" end
-    if UserPlayer:FindFirstChild("level") then UserPlayer.level.Text = "Level: HIDDEN" end
-    if UserPlayer:FindFirstChild("level") then UserPlayer.user.Text = "HIDDEN" end
-    local hud = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("hud"):WaitForChild("safezone")
-    if hud:FindFirstChild("coins") then hud.coins.Text = "HIDDEN$" end
-    if hud:FindFirstChild("lvl") then hud.lvl.Text = "HIDDEN LVL" end
-    task.wait(0.01)
+end
+
+-- Gọi hàm spawn để thực thi liên tục kiểm tra NoCooldown
+task.spawn(function()
+    while task.wait(0.1) do
+        if toggleNoCooldown then
+            local backpack = player:FindFirstChild("Backpack")
+            local character = player.Character
+            if not backpack or not character then
+                continue
+            end
+
+            local tool = backpack:FindFirstChild("Gas-Gas") or character:FindFirstChild("Gas-Gas")
+            if tool then
+                -- Nhấn chuột trái tấn công
+                local leftClickRemote = tool:FindFirstChild("LeftClickRemote")
+                if leftClickRemote then
+                    local hrp = character:FindFirstChild("HumanoidRootPart")
+                    local direction = hrp and hrp.CFrame.LookVector or Vector3.new(0, 0, -1)
+                    local args = {
+                        [1] = direction, -- Hướng phía trước
+                        [2] = 4         -- Sức mạnh hoặc tầm đánh
+                    }
+                    leftClickRemote:FireServer(unpack(args))
+                end
+
+                -- Gửi sự kiện tắt cooldown
+                local remoteEvent = tool:FindFirstChild("RemoteEvent")
+                if remoteEvent then
+                    local args = {
+                        [1] = false -- Vô hiệu hóa cooldown
+                    }
+                    remoteEvent:FireServer(unpack(args))
+                end
+            end
+        end
+    end
 end)
 
+-- Find Fruit
+local fruitsESP = {}
+local findFruitEnabled = false
+local function createESP(fruit)
+    if not fruit:FindFirstChild("Handle") then return end
 
+    if fruitsESP[fruit] then
+        fruitsESP[fruit]:Destroy()
+        fruitsESP[fruit] = nil
+    end
 
-PlayerSection:AddDropdown("Walk On Water Zone", {"Ocean", "Desolate Deep", "The Depths"}, Ocean, function(selectedZone)
-    WalkZone = selectedZone 
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = fruit.Handle
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+
+    local label = Instance.new("TextLabel", billboard)
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = fruit.Name
+    label.TextColor3 = Color3.fromRGB(255, 255, 0)
+    label.TextScaled = true
+
+    billboard.Parent = fruit
+    fruitsESP[fruit] = billboard
+end
+
+local function findFruits()
+    local fruits = {}
+    for _, object in pairs(workspace:GetChildren()) do
+        if object:IsA("Tool") and object.Name:lower():find("fruit") then
+            table.insert(fruits, object)
+            if findFruitEnabled then
+                createESP(object)
+            end
+        end
+    end
+    return fruits
+end
+
+local function teleportToFruit(fruit)
+    if fruit and fruit:FindFirstChild("Handle") then
+        if findFruitEnabled then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = fruit.Handle.CFrame
+        end
+    end
+end
+
+local runService = game:GetService("RunService")
+runService.Heartbeat:Connect(function()
+    local fruits = findFruits()
+    if #fruits > 0 then
+        for _, fruit in pairs(fruits) do
+            if fruit.Parent == workspace then
+                teleportToFruit(fruit)
+                wait(1)
+            end
+        end
+    end
 end)
 
-    AllFuncs['To Pos Stand'] = function()
-        while Config['To Pos Stand'] and task.wait() do
-            if not Config['SelectPositionStand'] then
-                Notify("Pls Select Position")
-                Config['To Pos Stand'] = false
+workspace.ChildAdded:Connect(function(child)
+    if child:IsA("Tool") and child.Name:lower():find("fruit") then
+        wait(0.5)
+        if findFruitEnabled then
+            createESP(child)
+        end
+        teleportToFruit(child)
+    end
+end)
+
+workspace.ChildRemoved:Connect(function(child)
+    if fruitsESP[child] then
+        fruitsESP[child]:Destroy()
+        fruitsESP[child] = nil
+    end
+end)
+
+-- Boat Protect
+local function tweenBoatToProtectHeight(boat)
+    local primary = boat.PrimaryPart
+    if not primary then
+        warn("Thuyền không có PrimaryPart để tween bảo vệ!")
+        return
+    end
+
+    local currentPos = primary.Position
+    local targetY = 200 -- Mặc định là 200
+    if lockHeightMode then -- Nếu bật khóa độ cao
+        local numY = tonumber(customY)
+        if numY then
+            targetY = numY -- Sử dụng giá trị Y đã nhập nếu hợp lệ
+        end
+    end
+
+    if not originalBoatProtectY then
+        originalBoatProtectY = currentPos.Y
+    end
+
+    local distance = math.abs(targetY - currentPos.Y)
+    local tweenTime = distance / tweenSpeed
+
+    local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local goal = { CFrame = CFrame.new(currentPos.X, targetY, currentPos.Z) }
+
+    if boatProtectTween then
+        boatProtectTween:Cancel()
+        boatProtectTween = nil
+    end
+
+    setBoatNoClip(boat, true)
+    if LocalPlayer.Character then
+        setPlayerNoClip(LocalPlayer.Character, true)
+    end
+
+    boatProtectTween = TweenService:Create(primary, tweenInfo, goal)
+    boatProtectTween:Play()
+
+    local startY = currentPos.Y
+    task.spawn(function()
+        while boatProtectTween and boatProtectTween.PlaybackState == Enum.PlaybackState.Playing do
+            task.wait(0.1)
+            if boat and primary then
+                local newCurrentPos = primary.Position
+                local newTargetY = targetY
+                if lockHeightMode then -- Update targetY during tween if lockHeightMode is on
+                    local numY = tonumber(customY)
+                    if numY then
+                        newTargetY = numY
+                    end
+                end
+                primary.CFrame = CFrame.new(newCurrentPos.X, newTargetY, newCurrentPos.Z)
+            end
+        end
+        if not boatProtectImmediateEnabled then
+            setBoatNoClip(boat, false)
+            if LocalPlayer.Character then
+                setPlayerNoClip(LocalPlayer.Character, false)
+            end
+        end
+    end)
+end
+
+local function checkBoatHealth()
+    while boatProtectEnabled do
+        task.wait(1)
+        local boat = currentBoat
+        if not boat then
+            boat, _ = getBoatVehicleSeat()
+            currentBoat = boat
+        end
+        if boat then
+            local primary = boat.PrimaryPart
+            if primary then
+                local currentPos = primary.Position
+                local boatHealth = 100 -- Máu thuyền (có thể cần điều chỉnh logic lấy máu thuyền nếu có)
+                local char = LocalPlayer.Character
+                if char then
+                    local humanoid = char:FindFirstChild("Humanoid")
+                    if humanoid then
+                        boatHealth = humanoid.Health -- Tạm thời dùng máu người chơi làm máu thuyền
+                    end
+                end
+
+                local currentY = primary.Position.Y
+                local targetY = 200
+                if lockHeightMode then
+                    local numY = tonumber(customY)
+                    if numY then
+                        targetY = numY
+                    else
+                        targetY = 200 -- Default to 200 if customY is not valid and lockHeightMode is on
+                    end
+                end
+
+                if boatHealth <= 50 or (originalBoatProtectY and math.abs(currentY - originalBoatProtectY) > 10 ) then
+                    if not boatProtectImmediateEnabled then
+                        tweenBoatToProtectHeight(boat)
+                    end
+                end
+            end
+        else
+            currentBoat = nil
+        end
+    end
+end
+
+local function boatProtectImmediateLoop()
+    while boatProtectImmediateEnabled do
+        task.wait(1)
+        local boat = currentBoat
+        if not boat then
+            boat, _ = getBoatVehicleSeat()
+            currentBoat = boat
+        end
+        if boat then
+            tweenBoatToProtectHeight(boat)
+        else
+            currentBoat = nil
+        end
+    end
+end
+
+-- Function to stop boat protect
+local function stopBoatProtect()
+    if boatProtectTween then
+        boatProtectTween:Cancel()
+        boatProtectTween = nil
+    end
+    local boat = currentBoat
+    if boat then
+        setBoatNoClip(boat, false)
+        if LocalPlayer.Character then
+            setPlayerNoClip(LocalPlayer.Character, false)
+        end
+    end
+
+    if boatProtectConnection then
+        boatProtectConnection:Disconnect()
+        boatProtectConnection = nil
+    end
+
+    currentBoat = nil
+    originalBoatProtectY = nil
+end
+
+-- Rock Destruction Logic
+local rockDestructionLoop = nil -- Biến để lưu task loop phá đá
+
+local function setRockDestruction(enabled)
+    destroyRockMode = enabled -- Cập nhật trạng thái destroyRockMode
+
+    if rockDestructionLoop then -- Nếu loop đang chạy, dừng nó
+        task.cancel(rockDestructionLoop)
+        rockDestructionLoop = nil
+    end
+
+    if enabled then
+        rockDestructionLoop = task.spawn(function() -- Bắt đầu loop mới
+            while destroyRockMode do -- Loop chỉ chạy khi destroyRockMode là true
+                local rocksFolder = Workspace:FindFirstChild("Rocks")
+                if rocksFolder then
+                    for _, rock in ipairs(rocksFolder:GetChildren()) do
+                        if rock:IsA("BasePart") then
+                            pcall(function() -- Sử dụng pcall để tránh lỗi script khi destroy object
+                                rock:Destroy()
+                            end)
+                        end
+                    end
+                end
+                task.wait(0.1) -- Chờ một chút trước khi kiểm tra lại, giảm tải cho game
+            end
+            print("Rock Destruction Loop Stopped") -- Feedback when loop stops
+        end)
+        print("Rock Destruction Enabled - Continuous") -- Feedback when enabled
+    else
+        print("Rock Destruction Disabled") -- Feedback when disabled
+    end
+end
+
+
+-- Tab Main
+MainTab:AddToggle("LevithanToggle", {
+    Title = "Tìm Levithan và 🌋",
+    Description = "Bật/Tắt tìm Levithan và 🌋",
+    Callback = function(Value)
+        if Value then -- Toggle is ON
+            if not scriptEnabled then -- Only start if not already enabled
+                scriptEnabled = true
+                tweenBoatToVector3(Vector3.new(-99999999, 0, 0))
+            end
+        else -- Toggle is OFF
+            if scriptEnabled then -- Only stop if currently enabled
+                stopTween("Người dùng tắt Tìm Levithan.")
+            end
+        end
+    end
+})
+
+MainTab:AddToggle("Khóa", {
+    Title = "Bay Thuyền ⛵",
+    Description = "Bật/Tắt khóa Bay ⛵",
+    Callback = function(Value)
+        lockHeightMode = Value
+    end
+})
+
+MainTab:AddToggle("Rock", {
+    Title = "Phá đá",
+    Description = "Bật/Tắt phá đá liên tục",
+    Callback = function(Value)
+        setRockDestruction(Value) --  <- This line calls the setRockDestruction function NOW.
+    end
+})
+
+MainTab:AddInput("Y", {
+    Title = "Độ cao Bay",
+    Description = "Nhập độ cao ",
+    Callback = function(Value)
+        local val = tonumber(Value)
+        if val then
+            customY = val
+        else
+            customY = 100
+        end
+    end
+})
+
+MainTab:AddInput("Speed", {
+    Title = "Tốc độ",
+    Description = "Nhập tốc độ tween",
+    Callback = function(Value)
+        local val = tonumber(Value)
+        if val and val > 0 then
+            tweenSpeed = val
+        else
+            tweenSpeed = 350
+        end
+    end
+})
+
+MainTab:AddToggle("Auto Return", {
+    Title = "Tự động trở về ⛵",
+    Description = "Bật/Tắt tự động trở về ⛵",
+    Callback = function(Value)
+        autoReturnEnabled = Value
+        if autoReturnEnabled then
+            task.spawn(autoReturnCheck)
+        end
+    end
+})
+
+MainTab:AddToggle("Kill Aura", {
+    Title = "Golem và Quái tự chết",
+    Description = "Bật/Tắt Kill Aura",
+    Callback = function(Value)
+        killAuraEnabled = Value
+        if killAuraEnabled then
+            task.spawn(killAuraLoop)
+        end
+    end
+})
+
+-- Tab Player
+local playerDropdown = PlayerTab:AddDropdown("Chọn người chơi", {
+    Title = "Chọn người chơi",
+    Description = "Danh sách người chơi",
+    Values = {}, -- Danh sách người chơi sẽ được cập nhật sau
+    Callback = function(Value)
+        local selected = Players:FindFirstChild(Value)
+        if selected then
+            selectedPlayer = selected
+            print("Đã chọn người chơi:", Value)
+        else
+            selectedPlayer = nil
+            print("Không tìm thấy người chơi: ", Value)
+        end
+    end
+})
+
+-- Hàm làm mới danh sách người chơi
+local function refreshPlayerList()
+    local playerNames = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            table.insert(playerNames, player.Name)
+        end
+    end
+    playerDropdown:SetValues(playerNames) -- Cập nhật danh sách người chơi
+end
+
+-- Thêm TextBox để tìm tên người chơi
+local playerSearchBox = PlayerTab:AddInput("Tìm người chơi", {
+    Title = "Tìm người chơi",
+    Description = "Nhập tên người chơi để tìm kiếm",
+    Callback = function(Value)
+        -- Lọc danh sách người chơi dựa trên từ khóa
+        local filteredPlayers = {}
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and string.find(string.lower(player.Name), string.lower(Value)) then
+                table.insert(filteredPlayers, player.Name)
+            end
+        end
+        playerDropdown:SetValues(filteredPlayers) -- Cập nhật danh sách người chơi
+    end
+})
+
+-- Nút Refresh
+PlayerTab:AddButton({
+    Title = "Refresh",
+    Description = "Làm mới danh sách người chơi",
+    Callback = function()
+        refreshPlayerList()
+    end
+})
+
+-- Làm mới danh sách người chơi khi mở tab
+refreshPlayerList()
+
+-- Tab Đảo
+local islandDropdown = IslandTab:AddDropdown("Chọn đảo", {
+    Title = "Chọn đảo",
+    Description = "Danh sách đảo",
+    Values = {"Tiki", "Hydra", "Pháo đài", "Dinh Thự", "Lâu Đài Bóng Tối", "Cảng", "Cây Đại Thụ", "Đảo Bánh"},
+    Callback = function(Value)
+        selectedIslandCoord = islands[Value] -- Lưu tọa độ đảo được chọn
+        print("Đã chọn đảo:", Value)
+    end
+})
+
+-- Thêm TextBox để tìm tên đảo
+local islandSearchBox = IslandTab:AddInput("Tìm đảo", {
+    Title = "Tìm đảo",
+    Description = "Nhập tên đảo để tìm kiếm",
+    Callback = function(Value)
+        -- Lọc danh sách đảo dựa trên từ khóa
+        local filteredIslands = {}
+        for islandName, _ in pairs(islands) do
+            if string.find(string.lower(islandName), string.lower(Value)) then
+                table.insert(filteredIslands, islandName)
+            end
+        end
+        islandDropdown:SetValues(filteredIslands) -- Cập nhật danh sách đảo
+    end
+})
+
+-- Nút Tween đến đảo
+IslandTab:AddButton({
+    Title = "Tween: OFF",
+    Description = "Bật/Tắt tween đến đảo",
+    Callback = function()
+        if islandTweening then
+            stopTween("Người dùng tắt Tween Đảo.")
+            islandTweening = false
+            Fluent:Notify({
+                Title = "Tween Đảo",
+                Content = "Đã tắt Tween Đảo.",
+                Duration = 3
+            })
+        else
+            if not selectedIslandCoord then
+                Fluent:Notify({
+                    Title = "Lỗi",
+                    Content = "Chưa chọn đảo!",
+                    Duration = 3
+                })
                 return
             end
-            pcall(function()
-                LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame = Config['SelectPositionStand']
+            islandTweening = true
+            Fluent:Notify({
+                Title = "Tween Đảo",
+                Content = "Đang tween đến đảo...",
+                Duration = 3
+            })
+            tweenBoatToVector3(selectedIslandCoord)
+        end
+    end
+})
+
+-- Nút Tween đến Hydra
+IslandTab:AddToggle("HydraIslandToggle", {
+    Title = "Kéo tim đến Hydra",
+    Description = "Bật/Tắt Kéo Tim đến Hydra",
+    Callback = function(Value)
+        if Value then -- Bật
+            islandTweening = true
+            Fluent:Notify({
+                Title = "Tween đến Hydra",
+                Content = "Đang tween đến Hydra...",
+                Duration = 3
+            })
+            tweenBoatToVector3(islands["Hydra"])
+        else -- Tắt
+            stopTween("Người dùng tắt Tween đến Hydra.")
+            islandTweening = false
+            Fluent:Notify({
+                Title = "Tween đến Hydra",
+                Content = "Đã tắt Tween đến Hydra.",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Nút Tween đến Tiki
+IslandTab:AddToggle("TikiIslandToggle", {
+    Title = "Kéo tim đến tiki",
+    Description = "Bật/Tắt Kéo Tim Tiki",
+    Callback = function(Value)
+        if Value then -- Bật
+            islandTweening = true
+            Fluent:Notify({
+                Title = "Tween đến Tiki",
+                Content = "Đang tween đến Tiki...",
+                Duration = 3
+            })
+            tweenBoatToVector3(islands["Tiki"])
+        else -- Tắt
+            stopTween("Người dùng tắt Tween đến Tiki.")
+            islandTweening = false
+            Fluent:Notify({
+                Title = "Tween đến Tiki",
+                Content = "Đã tắt Tween đến Tiki.",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Tab Khác
+OtherTab:AddToggle("Anti Die", {
+    Title = "Anti Die",
+    Description = "Anti die chỉ có hiệu lực khi HP=30%",
+    Callback = function(Value)
+        antiDieEnabled = Value
+        if not antiDieEnabled and originalPosition then
+            -- Đưa player về vị trí cũ
+            local character = LocalPlayer.Character
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = CFrame.new(originalPosition)
+            end
+            originalPosition = nil -- Reset vị trí cũ
+        end
+        if antiDieEnabled then
+            task.spawn(checkHealth)
+        end
+    end
+})
+
+OtherTab:AddToggle("DashNoCD", {
+    Title = "DashNoCD",
+    Description = "Bật/Tắt DashNoCD",
+    Callback = function(Value)
+        dashNoCDEnabled = Value
+        _G.DodgewithoutCool = dashNoCDEnabled
+        if dashNoCDEnabled then
+            task.spawn(NoCooldown)
+        end
+    end
+})
+
+OtherTab:AddToggle("WalkSpeed", {
+    Title = "WalkSpeed",
+    Description = "Bật/Tắt WalkSpeed",
+    Callback = function(Value)
+        walkSpeedEnabled = Value
+        tpwalking = walkSpeedEnabled
+        if walkSpeedEnabled and speaker.Character then
+            startTeleportWalk(speaker.Character)
+        end
+    end
+})
+
+OtherTab:AddToggle("Gas", {
+    Title = "Gas",
+    Description = "Dành riêng cho Developer",
+    Callback = function(Value)
+        local playerName = player.Name
+        if playerName == "caubetoi4" then -- Kiểm tra tên người chơi
+            gasEnabled = Value
+            if gasEnabled then
+                createNoCooldownTool()
+            else
+                local backpack = LocalPlayer:FindFirstChild("Backpack")
+                if backpack then
+                    local tool = backpack:FindFirstChild("NoCooldownToggle")
+                    if tool then
+                        tool:Destroy()
+                    end
+                end
+            end
+        else
+            gasEnabled = false
+            Fluent:Notify({
+                Title = "Lỗi",
+                Content = "Chỉ Developer mới dùng được tính năng này",
+                Duration = 3
+            })
+        end
+    end
+})
+
+-- Boat Protect Toggle
+OtherTab:AddToggle("BoatProtect", {
+    Title = "Bảo Vệ Thuyền 🔰",
+    Description = "Bật/Tắt Bảo Vệ Thuyền Khi HP=50%",
+    Callback = function(Value)
+        boatProtectEnabled = Value
+        if boatProtectEnabled then
+            task.spawn(checkBoatHealth)
+        else
+            stopBoatProtect()
+        end
+    end
+})
+
+-- Boat Protect Immediate Toggle
+OtherTab:AddToggle("BoatProtectImmediate", {
+    Title = "Bảo Vệ Thuyền Ngay Lập Tức",
+    Description = "Bật/Tắt Bảo Vệ Thuyền Ngay Lập Tức",
+    Callback = function(Value)
+        boatProtectImmediateEnabled = Value
+        if boatProtectImmediateEnabled then
+            task.spawn(boatProtectImmediateLoop)
+            local boat = currentBoat
+            if not boat then
+                boat, _ = getBoatVehicleSeat()
+                currentBoat = boat
+            end
+            if boat then
+                tweenBoatToProtectHeight(boat)
+            end
+        else
+            stopBoatProtect()
+        end
+    end
+})
+
+-- Tab Fruit
+FruitTab:AddToggle("Find Fruit", {
+    Title = "Find Fruit",
+    Description = "Tự động nhặt Fruit + Esp fruit",
+    Callback = function(Value)
+        findFruitEnabled = Value
+        if not findFruitEnabled then
+            local fruits = findFruits()
+            for _, fruit in ipairs(fruits) do
+                if fruitsESP[fruit] then
+                    fruitsESP[fruit]:Destroy()
+                    fruitsESP[fruit] = nil
+                end
+            end
+        end
+    end
+})
+
+-- Auto Random Fruit Toggle
+FruitTab:AddToggle("Auto Random Fruit", {
+    Title = "Auto Random Fruit",
+    Description = "Bật/Tắt tự động mua trái ác quỷ ngẫu nhiên",
+    Callback = function(state)
+        _G.Random_Auto = state
+        if state then
+            task.spawn(function()
+                pcall(function()
+                    while _G.Random_Auto do
+                        wait(0.1)
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Cousin", "Buy") -- Mua random fruit
+                    end
+                end)
             end)
+        else
+            _G.Random_Auto = false -- Ensure to set _G.Random_Auto to false when disabling
         end
     end
+})
 
-    local Config = {
-        ['Toggle Walk Speed'] = false, 
-        ['Set Walk Speed'] = 50,
-        ['Toggle Jump Power'] = false,
-        ['Set Jump Power'] = 50
-    }
-    
-    local LocalPlayer = game.Players.LocalPlayer
-
-        AllFuncs['Toggle Walk Speed'] = function()
-        while true do
-            if Config['Toggle Walk Speed'] then
-                pcall(function()
-                    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.WalkSpeed = Config['Set Walk Speed']
-                    end
-                end)
-            else
-                pcall(function()
-                    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.WalkSpeed = 16 
-                    end
-                end)
-            end
-            task.wait(0.1) 
-        end
-    end
-
-
-
-
-    
-    
-    AllFuncs['Toggle Jump Power'] = function()
-        while true do
-            if Config['Toggle Jump Power'] then
-                pcall(function()
-                    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.JumpPower = Config['Set Jump Power']
-                    end
-                end)
-            else
-                pcall(function()
-                    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
-                    if humanoid then
-                        humanoid.JumpPower = 50
-                    end
-                end)
-            end
-            task.wait(0.1)
-        end
-    end
-
-SettingsSection:AddLabel("Useless because anti afk auto loads!")
-	ShopSection:AddLabel("Turn on when you first join")
-    PlayerSection:AddToggle('Toggle Walk Speed', false, function(val)
-        Config['Toggle Walk Speed'] = val
-        print("Walk Speed Toggle:", val)
-    end)
-    
-    PlayerSection:AddToggle('Toggle Jump Power', false, function(val)
-        Config['Toggle Jump Power'] = val
-        print("Jump Power Toggle:", val)
-    end)
-    
-    PlayerSection:AddSlider('Walk Speed', 1, 500, 50, function(val)
-        Config['Set Walk Speed'] = val
-        print('Walk Speed Set to:', val)
-    end)
-    
-    PlayerSection:AddSlider('Jump Power', 1, 500, 50, function(val)
-        Config['Set Jump Power'] = val
-        print('Jump Power Set to:', val)
-    end)
-    
-    task.spawn(AllFuncs['Toggle Walk Speed'])
-    task.spawn(AllFuncs['Toggle Jump Power'])
-    
-Convenience:AddToggle("Remove Fog", false, function(Value)
-    if Value then
-        if game:GetService("Lighting"):FindFirstChild("Sky") then
-            game:GetService("Lighting"):FindFirstChild("Sky").Parent = game:GetService("Lighting").bloom
-        end
-    else
-        if game:GetService("Lighting").bloom:FindFirstChild("Sky") then
-            game:GetService("Lighting").bloom:FindFirstChild("Sky").Parent = game:GetService("Lighting")
-        end
-    end
-end)
-
-local RunService = game:GetService("RunService")
-
-local DayOnlyLoop
-Convenience:AddToggle("Day", false, function(Value)
-    if Value then
-        if DayOnlyLoop then return end  
-        DayOnlyLoop = RunService.Heartbeat:Connect(function()
-            game:GetService("Lighting").TimeOfDay = "12:00:00"
-        end)
-    else
-        if DayOnlyLoop then
-            DayOnlyLoop:Disconnect()
-            DayOnlyLoop = nil
-        end
-    end
-end)
-
-local NightOnlyLoop
-Convenience:AddToggle("Night", false, function(Value)
-    if Value then
-        if NightOnlyLoop then return end
-        NightOnlyLoop = RunService.Heartbeat:Connect(function()
-            game:GetService("Lighting").TimeOfDay = "22:00:00"
-        end)
-    else
-        if NightOnlyLoop then
-            NightOnlyLoop:Disconnect()
-            NightOnlyLoop = nil
-        end
-    end
-end)
-
-local TeleportService = game:GetService("TeleportService")
-local Players = game:GetService("Players")
-
-Actions:AddButton("Rejoin Server", function()
-    TeleportService:TeleportToPlaceInstance(game.placeId, game.JobId, Players.LocalPlayer)
-end)
-
-MiscSection:AddToggle("Fish Radar", false, function(Value)
-
-    for _, v in pairs(game:GetService("CollectionService"):GetTagged("radarTag")) do
-        if v:IsA("BillboardGui") or v:IsA("SurfaceGui") then
-            v.Enabled = Value
-        end
-    end
-end)
---real bdokx super sigma
-    local function GetPosition()
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            return character.HumanoidRootPart.Position
-        end
-        return Vector3.new(0, 0, 0)  
-    end
-    
-    local function ExportValue(value)
-        return string.format("%.2f", value) 
-    end
-    
-    MiscSection:AddToggle("Gps", false, function(Value)
-        local PlayerGui = game.Players.LocalPlayer.PlayerGui
-        local hud = PlayerGui:WaitForChild("hud")
-        local safezone = hud:WaitForChild("safezone")
-        local backpack = safezone:WaitForChild("backpack")
-    
+-- Tab Player - Nút Spectate
+PlayerTab:AddToggle("Spectate", {
+    Title = "Xem Player",
+    Description = "Bật/Tắt Xem Player",
+    Callback = function(Value)
         if Value then
-            local XyzClone = game:GetService("ReplicatedStorage").resources.items.items.GPS.GPS.gpsMain.xyz:Clone()
-            XyzClone.Parent = backpack
-
-            local Pos = GetPosition()
-            local StringInput = string.format("%s,%s,%s", ExportValue(Pos.X), ExportValue(Pos.Y), ExportValue(Pos.Z))
-            XyzClone.Text = "<font color='#ff4949'>X</font><font color='#a3ff81'>Y</font><font color='#626aff'>Z</font>: "..StringInput
-
-            BypassGpsLoop = game:GetService("RunService").Heartbeat:Connect(function()
-                local Pos = GetPosition()
-                local StringInput = string.format("%s,%s,%s", ExportValue(Pos.X), ExportValue(Pos.Y), ExportValue(Pos.Z))
-                XyzClone.Text = "<font color='#ff4949'>X</font><font color='#a3ff81'>Y</font><font color='#626aff'>Z</font>: "..StringInput
-            end)
+            if selectedPlayer and selectedPlayer.Character then
+                localplr = LocalPlayer
+                localplr.CameraMaxZoomDistance = 100
+                localplr.CameraMinZoomDistance = 0.1
+                workspace.CurrentCamera.CameraSubject = selectedPlayer.Character
+            end
         else
-            if backpack:FindFirstChild("xyz") then
-                backpack:FindFirstChild("xyz"):Destroy()
-            end
-            if BypassGpsLoop then
-                BypassGpsLoop:Disconnect()
-                BypassGpsLoop = nil
-            end
-        end
-    end)
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui") 
-local hud = PlayerGui:WaitForChild("hud") 
-local safezone = hud:WaitForChild("safezone") 
-
-
-safezone.Visible = true
-
-
-MiscSection:AddToggle("Show/Hide UIs", false, function(Value)
-    if Value then
-        safezone.Visible = false
-        print("UI is now visible.")
-    else
-        safezone.Visible = true
-        print("UI is now hidden.")
-    end
-end)
-
-
-
-MiscSection:AddToggle("Infinite Oxygen", false, function(Value)
-    LocalPlayer.Character.client.oxygen.Disabled = Value
-end)
-
-MiscSection:AddToggle("Clear Weather", false, function(Value)
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local weather = ReplicatedStorage:WaitForChild("world"):WaitForChild("weather")
-    local OldWEA = OldWEA or weather.Value
-
-    if Value then
-        weather.Value = "Clear"
-    else
-        weather.Value = OldWEA
-    end
-end)
-    
-
-PlayerSection:AddToggle("Noclip", false, function(Value)
-    Config['Toggle Noclip'] = Value 
-
-    if Value then
-        local charParts = LocalPlayer.Character:GetDescendants()
-        for _, part in pairs(charParts) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
-        end
-    else
-        local charParts = LocalPlayer.Character:GetDescendants()
-        for _, part in pairs(charParts) do
-            if part:IsA("BasePart") then
-                part.CanCollide = true
-            end
+            workspace.CurrentCamera.CameraSubject = LocalPlayer.Character
         end
     end
-end)
+})
 
-MiscSection:AddToggle("Anti Lag", false, function(Value)
-    if Value then
-        for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("Part") or v:IsA("UnionOperation") or v:IsA("MeshPart") then
-                if v.Transparency ~= 1 then
-                    v.Material = Enum.Material.SmoothPlastic
-                end
-            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v:Destroy()
-            end
+-- Nút Tween Player trong Tab "Player"
+PlayerTab:AddButton({
+    Title = "Tween Player",
+    Description = "Tween boat đến Player đã chọn",
+    Callback = function()
+        if playerTweening then
+            stopTween("Người dùng tắt Tween Player.")
+            playerTweening = false
+            Fluent:Notify({
+                Title = "Tween Player",
+                Content = "Đã tắt Tween Player.",
+                Duration = 3
+            })
+            return -- Thêm return để ngăn gọi tweenBoatToPlayer khi đang tween
         end
-    else
-    end
-end)
---bdokxk and diddy fish auto farm btw!
-Config = _G.Config or {}  
-Config['Farm Fish'] = false  
-
-local Players = game.Players
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local Backpack = LocalPlayer.Backpack
-local PlayerGui = LocalPlayer.PlayerGui
-local VirtualUser = game:GetService("VirtualUser")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-local RodName = ReplicatedStorage.playerstats[LocalPlayer.Name].Stats.rod.Value
-
-AllFuncs = {}
-
-AllFuncs['Farm Fish'] = function()
-    while Config['Farm Fish'] and task.wait() do
-        if Backpack:FindFirstChild(RodName) then
-            LocalPlayer.Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
-        end
-        if LocalPlayer.Character:FindFirstChild(RodName) and LocalPlayer.Character[RodName]:FindFirstChild("bobber") then
-
-            repeat
-                pcall(function()
-                    PlayerGui:FindFirstChild("shakeui").safezone:FindFirstChild("button").Size = UDim2.new(1001, 0, 1001, 0)
-                    VirtualUser:Button1Down(Vector2.new(1, 1))
-                    VirtualUser:Button1Up(Vector2.new(1, 1))
-                end)
-                RunService.Heartbeat:Wait()
-            until not LocalPlayer.Character:FindFirstChild(RodName) or LocalPlayer.Character[RodName].values.bite.Value or not Config['Farm Fish']
-
-            repeat
-                ReplicatedStorage.events.reelfinished:FireServer(1000000000000000000000000, true)
-                task.wait(0.5)
-            until not LocalPlayer.Character:FindFirstChild(RodName) or not LocalPlayer.Character[RodName].values.bite.Value or not Config['Farm Fish']
-        else
-
-            if LocalPlayer.Character:FindFirstChild(RodName) then
-                LocalPlayer.Character[RodName].events.cast:FireServer(1000000000000000000000000)
-                task.wait(2)
-            end
-        end
-    end
-end
-
-function ExportValue(arg1, arg2)
-    return tonumber(string.format("%." .. (arg2 or 1) .. 'f', arg1))
-end
-
-MechanicsSection:AddToggle("Auto Farm (Laggy v1)", false, function(state)
-    Config['Farm Fish'] = state
-    if state then
-        AllFuncs['Farm Fish']()
-    end
-end)
-
-
-ExclusivesSection:AddButton("Auto Heaven Rod", function() 
-    spawn(function()
-        local SharedRed, SharedBlue, SharedGreen, SharedYellow = false, false, false, false
-        local IsBuying, IsBuying2, IsBuying3 = false, false, false
-    
-        Module:Run_Loop("Auto Get Heaven's Rod", function()
-          if Module:IsHaveRod("Heaven's Rod") then
-            Notification("You Already Have Heaven's Rod!")
-            wait(5)
+        if not selectedPlayer then
+            Fluent:Notify({
+                Title = "Lỗi",
+                Content = "Chưa chọn player!",
+                Duration = 3
+            })
             return
-          end
-    
-          if not World.map["Northern Summit"]:FindFirstChild("NorthFinalPuzzle") then
-            Module:GetTo(CFrame.new(19990.3789, 1136.4281, 5536.5249, 0.984981179, -8.43332231e-08, -0.172661752, 7.71411734e-08, 1, -4.83640221e-08, 0.172661752, 3.43183189e-08, 0.984981179))
-          else
-            if Player.Backpack:FindFirstChild("Blue Energy Crystal") and not SharedBlue then
-              if World.map["Northern Summit"].NorthFinalPuzzle.Shards.Blue.handle.Prompt.Enabled then
-                if Module:GetMagnitude(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875)) > 5 then
-                  Module:GetTo(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875))
-                else
-                  pcall(function()ReplicatedStorage.packages.Net["RE/NorthFinalPuzzleService/Place"]:FireServer("Blue")end)
-                  Module:FirePrompt(World.map["Northern Summit"].NorthFinalPuzzle.Shards.Blue.handle.Prompt)
-                  wait(2)
-                  SharedBlue = true
-                end
-              elseif not World.map["Northern Summit"].NorthFinalPuzzle.Shards.Blue.handle.Prompt.Enabled then
-                SharedBlue = true
-              end
-            end
-      
-            if Player.Backpack:FindFirstChild("Green Energy Crystal") and not SharedGreen then
-              if World.map["Northern Summit"].NorthFinalPuzzle.Shards.Green.handle.Prompt.Enabled then
-                if Module:GetMagnitude(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875)) > 5 then
-                  Module:GetTo(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875))
-                else
-                  pcall(function()ReplicatedStorage.packages.Net["RE/NorthFinalPuzzleService/Place"]:FireServer("Green")end)
-                  Module:FirePrompt(World.map["Northern Summit"].NorthFinalPuzzle.Shards.Green.handle.Prompt)
-                  wait(2)
-                  SharedGreen = true
-                end
-              elseif not World.map["Northern Summit"].NorthFinalPuzzle.Shards.Green.handle.Prompt.Enabled then
-                SharedGreen = true
-              end
-            end
-    
-            if Player.Backpack:FindFirstChild("Red Energy Crystal") and not SharedRed then
-              if World.map["Northern Summit"].NorthFinalPuzzle.Shards.Red.handle.Prompt.Enabled then
-                if Module:GetMagnitude(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875)) > 5 then
-                  Module:GetTo(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875))
-                else
-                  pcall(function()ReplicatedStorage.packages.Net["RE/NorthFinalPuzzleService/Place"]:FireServer("Red")end)
-                  Module:FirePrompt(World.map["Northern Summit"].NorthFinalPuzzle.Shards.Red.handle.Prompt)
-                  wait(2)
-                  SharedRed = true
-                end
-              elseif not World.map["Northern Summit"].NorthFinalPuzzle.Shards.Red.handle.Prompt.Enabled then
-                SharedRed = true
-              end
-            end
-    
-            if Player.Backpack:FindFirstChild("Yellow Energy Crystal") and not SharedYellow then
-              if World.map["Northern Summit"].NorthFinalPuzzle.Shards.Yellow.handle.Prompt.Enabled then
-                if Module:GetMagnitude(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875)) > 5 then
-                  Module:GetTo(CFrame.new(19967.16015625, 1137.2425537109375, 5362.26904296875))
-                else
-                  pcall(function()ReplicatedStorage.packages.Net["RE/NorthFinalPuzzleService/Place"]:FireServer("Yellow")end)
-                  Module:FirePrompt(World.map["Northern Summit"].NorthFinalPuzzle.Shards.Yellow.handle.Prompt)
-                  wait(2)
-                  SharedYellow = true
-                end
-              elseif not World.map["Northern Summit"].NorthFinalPuzzle.Shards.Yellow.handle.Prompt.Enabled then
-                SharedYellow = true
-              end
-            end
-      
-            if SharedRed and SharedBlue and SharedGreen and SharedYellow then
-              ReplicatedStorage.events.purchase:FireServer("Heaven's Rod", "Rod", nil, 1)
-              wait(1)
-            end
-    
-            if not Player.Backpack:FindFirstChild("Blue Energy Crystal") and not SharedBlue then
-              if not Player.Backpack:FindFirstChild("Pickaxe") and not IsBuying2 then
-                Module:BuyShop("Pickaxe", "Item", 1)
-                IsBuying2 = true
-                wait(10)
-              else
-                if Module:GetMagnitude(CFrame.new(20124.8711, 212.725845, 5449.35498, 0.793378353, 0, 0.608728826, 0, 1, 0, -0.608728826, 0, 0.793378353)) > 6 then
-                  Module:GetTo(CFrame.new(20124.8711, 212.725845, 5449.35498, 0.793378353, 0, 0.608728826, 0, 1, 0, -0.608728826, 0, 0.793378353))
-                else
-                  if Module:NearestPromptCheck(10, "Blue Energy Crystal") then
-                    pcall(function()ReplicatedStorage.packages.Net["RF/ItemSpawnCollect"]:InvokeServer("Blue Energy Crystal")end)
-                    Module:NearestPrompt(10)
-                  else
-                    if Player.Character:FindFirstChild("Pickaxe") then
-                      Player.Character:FindFirstChild("Pickaxe"):Activate()
-                    else
-                      Module:EquipTool("Pickaxe")
-                    end
-                  end
-                end
-              end
-            elseif not Player.Backpack:FindFirstChild("Yellow Energy Crystal") and not SharedYellow then
-              if Module:GetMagnitude(CFrame.new(19499.6953125, 335.21728515625, 5549.265625)) > 6 then
-                Module:GetTo(CFrame.new(19499.6953125, 335.21728515625, 5549.265625))
-              else
-                if Module:NearestPromptCheck(10, "Yellow Energy Crystal") then
-                  pcall(function()ReplicatedStorage.packages.Net["RF/ItemSpawnCollect"]:InvokeServer("Yellow Energy Crystal")end)
-                  Module:NearestPrompt(10)
-                else
-                  if not Player.Backpack:FindFirstChild("Avalanche Totem") and not IsBuying then
-                    Module:BuyShop("Avalanche Totem", "Item", 1)
-                    IsBuying = true
-                    wait(10)
-                  end
-    
-                  if Player.Character:FindFirstChild("Avalanche Totem") then
-                    Player.Character:FindFirstChild("Avalanche Totem"):Activate()
-                    wait(20)
-                  else
-                    Module:EquipTool("Avalanche Totem")
-                  end 
-                end
-              end
-            elseif not Player.Backpack:FindFirstChild("Red Energy Crystal") and not SharedRed then
-              if not IsBuying3 then
-                ReplicatedStorage.packages.Net["RF/NorthExp/PurchaseShard"]:InvokeServer()
-                IsBuying3 = true
-                wait(10)
-              end
-            elseif not Player.Backpack:FindFirstChild("Green Energy Crystal") and not SharedGreen then
-              if World.npcs:FindFirstChild("???") then
-                Module:TalkToNPC("???", function()
-                  if string.find(PlayerGui.options.safezone["1option"].text, "You're right, I'm freezing out here!") then
-                    PlayerGui.options.safezone["1option"].Selectable = true
-                    Module:ClickUi(PlayerGui.options.safezone["1option"].button)
-                  elseif string.find(PlayerGui.options.safezone["1option"].text, "I'm fascinated by the mysteries this mountain holds.") then
-                    PlayerGui.options.safezone["1option"].Selectable = true
-                    Module:ClickUi(PlayerGui.options.safezone["1option"].button)
-                  elseif string.find(PlayerGui.options.safezone["1option"].text, "Of course, that would be great") then
-                    PlayerGui.options.safezone["1option"].Selectable = true
-                    Module:ClickUi(PlayerGui.options.safezone["1option"].button)
-                  end
-                end)
-              else
-                Module:GetTo(CFrame.new(19872.7266, 448.0941, 5556.5830))
-              end
-            end
-          end
-        end)
-      end)        
-end)
-
-local tempthread = nil
-MechanicsSection:AddToggle("INF COINS", false, function(state)
-    if not state then
-        pcall(function() task.cancel(tempthread) end)
-        tempthread = nil
-    else
-        tempthread = task.spawn(function() 
-            while task.wait() do 
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()                   game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-                game:GetService('ReplicatedStorage').packages.Net["RE/DailyReward/Claim"]:FireServer()   
-            end 
-        end)
-    end
-end)
-
-local CastMode = "Legit"
-local ShakeMode = "Navigation"
-local ReelMode = "Blatant"
-
-local autoCastEnabled = false
-local autoShakeEnabled = false
-local autoReelEnabled = false
-
-
-
-local autoShakeEnabled = false
-local ShakeMode = "Navigation" 
-local autoShakeConnection = nil
-local lastMouseShakeTime = 0 
-
-local PlayerService = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local GuiService = game:GetService("GuiService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
-
-local LocalPlayer = PlayerService.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local function autoShake()
-    if not autoShakeEnabled then return end 
-
-    if ShakeMode == "Navigation" then
-        xpcall(function()
-            local shakeui = PlayerGui:FindFirstChild("shakeui")
-            if not shakeui then return end
-
-            local safezone = shakeui:FindFirstChild("safezone")
-            local button = safezone and safezone:FindFirstChild("button")
-            if not button then return end
-
-            task.wait(0.2) 
-            GuiService.SelectedObject = button
-
-            if GuiService.SelectedObject == button then
-                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-            end
-
-            task.wait(0.1)
-            GuiService.SelectedObject = nil 
-        end, function(err)
-        end)
-
-    elseif ShakeMode == "Mouse" then
-        local currentTime = tick()
-        if currentTime - lastMouseShakeTime < 0.1 then return end 
-        lastMouseShakeTime = currentTime
-
-        xpcall(function()
-            local shakeui = PlayerGui:FindFirstChild("shakeui")
-            if not shakeui then return end
-
-            local safezone = shakeui:FindFirstChild("safezone")
-            local button = safezone and safezone:FindFirstChild("button")
-            if not button then return end
-
-            local pos = button.AbsolutePosition
-            local size = button.AbsoluteSize
-            local centerX, centerY = pos.X + size.X / 2, pos.Y + size.Y / 2
-            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, LocalPlayer, 0)
-            task.wait(0.07) 
-            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, LocalPlayer, 0)
-        end, function(err)
-        end)
-    end
-end
-
-local function startAutoShake()
-    if not autoShakeConnection and autoShakeEnabled then
-        autoShakeConnection = RunService.RenderStepped:Connect(autoShake)
-    end
-end
-
-local function stopAutoShake()
-    if autoShakeConnection then
-        autoShakeConnection:Disconnect()
-        autoShakeConnection = nil
-    end
-end
-
-if FishingSection and FishingSection.AddToggle then
-    FishingSection:AddToggle("Auto Shake", false, function(toggle)
-        autoShakeEnabled = toggle
-        if toggle then
-            startAutoShake()
-        else
-            stopAutoShake()
         end
-    end)
-end
-
-
-
-local HuntOrNo = Convenience:AddToggle("Hunt Megaladon", false, UI.MegaladonHunting)
-
-FishingSetSection:AddDropdown('Auto Cast Mode', {'Legit', 'Blatant'}, 'Blatant', function(val)
-    CastMode = val
-end)
-
-FishingSetSection:AddDropdown('Auto Shake Mode', {'Navigation', 'Mouse'}, 'Navigation', function(val)
-    ShakeMode = val
-end)
-
-FishingSetSection:AddDropdown('Auto Reel Mode', {'Legit', 'Blatant'}, 'Blatant', function(val)
-    ReelMode = val
-end)
-
-
-
-Actions:AddButton("Hop Server", function()
-    AllFuncs.HopServer(true)
-end)
-
-    WebhookSection:AddButton(
-    "Set Webhook URL",
-    function()
-        NEVERLOSE:KeySystem(
-            "Webhook URL - Put URL as key and click Submit to set it.",
-            "",
-            function(URL)
-                Options.WebhookURL = URL
-                Notification:Notify("info", "Set Webhook Successfully", "Set webhook to "..URL, 5)
-                return true
-            end
-        ):Callback(function()end)
-    end
-    )
-
-    WebhookSection:AddToggle(
-        "Send Webhook Notifications",
-        false,
-        UI.WebhookNotifications
-    )
-
-    WebhookSection:AddToggle(
-        "Webhook Notifications for Priority Events",
-        false,
-        UI.PriorityWebhook
-    )
-
-    local TpSpotsFolder = Workspace:FindFirstChild("world"):WaitForChild("spawns"):WaitForChild("TpSpots")
-    local teleportSpots = {}
-    
-    for i, v in pairs(TpSpotsFolder:GetChildren()) do
-        if table.find(teleportSpots, v.Name) == nil then
-            table.insert(teleportSpots, v.Name)
-        end
-    end
-
-
-    for _, Place in pairs(teleportSpots) do
-
-        local Position = TpSpotsFolder:FindFirstChild(Place) and TpSpotsFolder[Place].Position
-
-
-        if Position then
-            Teleports:AddButton(
-                "Teleport to " .. Place,
-                function()
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Position
-                end
-            )
-        end
-    end
-
-
-TotemsSection:AddButton(
-    "Teleport to Aurora",
-    function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1811, -137, -3282)
-    end
-)
-
-
-TotemsSection:AddButton(
-    "Teleport to Sundial",
-    function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-1148, 135, -1075)
-    end
-)
-
-
-TotemsSection:AddButton(
-    "Teleport to Windset",
-    function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(2849, 178, 2702)
-    end
-)
-
-
-TotemsSection:AddButton(
-    "Teleport to Smokescreen",
-    function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(2789, 140, -625)
-    end
-)
-TotemsSection:AddButton(
-    "Teleport to Tempest",
-    function()
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(35, 133, 1943)
-    end
-)
-    
-WorldEvents:AddButton(
-    "Teleport to Strange Whirlpool",
-    function()
-        local offset = Vector3.new(25, 135, 25)
-        local WorldEvent = game.Workspace.zones.fishing:FindFirstChild("Isonade")
-        if not WorldEvent then 
-            return ShowNotification("Not found Strange Whirlpool")
-        end
-        HumanoidRootPart.CFrame = CFrame.new(WorldEvent.Position + offset)
-    end
-)
-
-
-WorldEvents:AddButton(
-    "Teleport to Great Hammerhead Shark",
-    function()
-        local offset = Vector3.new(0, 135, 0)
-        local WorldEvent = game.Workspace.zones.fishing:FindFirstChild("Great Hammerhead Shark")
-        if not WorldEvent then 
-            return ShowNotification("Not found Great Hammerhead Shark")
-        end
-        HumanoidRootPart.CFrame = CFrame.new(WorldEvent.Position + offset)
-    end
-)
-
-
-WorldEvents:AddButton(
-    "Teleport to Great White Shark",
-    function()
-        local offset = Vector3.new(0, 135, 0)
-        local WorldEvent = game.Workspace.zones.fishing:FindFirstChild("Great White Shark")
-        if not WorldEvent then 
-            return ShowNotification("Not found Great White Shark")
-        end
-        HumanoidRootPart.CFrame = CFrame.new(WorldEvent.Position + offset)
-    end
-)
-
-
-WorldEvents:AddButton(
-    "Teleport to Whale Shark",
-    function()
-        local offset = Vector3.new(0, 135, 0)
-        local WorldEvent = game.Workspace.zones.fishing:FindFirstChild("Whale Shark")
-        if not WorldEvent then 
-            return ShowNotification("Not found Whale Shark")
-        end
-        HumanoidRootPart.CFrame = CFrame.new(WorldEvent.Position + offset)
-    end
-)
-
-
-WorldEvents:AddButton(
-    "Teleport to The Depths - Serpent",
-    function()
-        local offset = Vector3.new(0, 50, 0)
-        local WorldEvent = game.Workspace.zones.fishing:FindFirstChild("The Depths - Serpent")
-        if not WorldEvent then 
-            return ShowNotification("Not found The Depths - Serpent")
-        end
-        HumanoidRootPart.CFrame = CFrame.new(WorldEvent.Position + offset)
-    end
-)
-
-    Teleports:AddButton("Best Spot", function()
-
-        local forceFieldPart = Instance.new("Part")
-        forceFieldPart.Size = Vector3.new(10, 1, 10) 
-        forceFieldPart.Position = Vector3.new(1447.8507080078125, 131.49998474121094, -7649.64501953125) 
-        forceFieldPart.Anchored = true 
-        forceFieldPart.BrickColor = BrickColor.new("White")
-        forceFieldPart.Material = Enum.Material.SmoothPlastic 
-        forceFieldPart.Parent = game.Workspace
-        local billboardGui = Instance.new("BillboardGui")
-        billboardGui.Adornee = forceFieldPart 
-        billboardGui.Size = UDim2.new(0, 200, 0, 50) 
-        billboardGui.StudsOffset = Vector3.new(0, 5, 0) 
-        billboardGui.Parent = game.Workspace 
-        --this is the part we get to be This is forced labor for bdokkx, dynamicarrays
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Text = "This is forced labor for bdokkx, dynamicarrays"
-        textLabel.TextColor3 = Color3.fromRGB(255, 0, 0) 
-        textLabel.TextSize = 20
-        textLabel.BackgroundTransparency = 1 
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.TextScaled = true 
-        textLabel.Parent = billboardGui 
-    --ronix owner whips us
-        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(1447.8507080078125, 133.49998474121094, -7649.64501953125)
-    end)
--- NO NO STOP RONIX OWW OWWW!
-Teleports:AddButton("Safe Place", function()
-    local SafeZone = Instance.new("Part")
-    SafeZone.Size = Vector3.new(30, 1, 30)
-    SafeZone.Position = Vector3.new(math.random(-2000, 2000), math.random(50000, 90000), math.random(-2000, 2000))
-    SafeZone.Anchored = true
-    SafeZone.BrickColor = BrickColor.new("Bright purple")
-    SafeZone.Material = Enum.Material.ForceField
-    SafeZone.Parent = workspace 
-    local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        character.HumanoidRootPart.CFrame = CFrame.new(SafeZone.Position + Vector3.new(0, 5, 0))
-    end
-end)
-
-local createdButtons = {}
-
-ShopSection:AddToggle("Teleport To Buy", false, function(state)
-    if not createdButtons["TeleportToBuy"] then
-        for _, v in pairs(workspace.world.interactables:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                v.HoldDuration = 0
-                ShopSection:AddButton("Buy " .. v.Parent.Name, function()
-                    local humanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if humanoidRootPart then
-                        if fireproximityprompt and not state then
-                            local OldCFrame = humanoidRootPart.CFrame
-                            humanoidRootPart.CFrame = v.Parent:GetPivot()
-                            delay(0.3, function()
-                                fireproximityprompt(v, 1)
-                                humanoidRootPart.CFrame = OldCFrame
-                            end)
-                        else
-                            if not fireproximityprompt then
-                                Notify("Execution does not support 'fireproximityprompt'.")
-                            else
-                                humanoidRootPart.CFrame = v.Parent:GetPivot()
-                            end
-                        end
-                    else
-                        Notify("HumanoidRootPart not found.")
-                    end
-                end)
-            end
-        end
-        createdButtons["TeleportToBuy"] = true
-    end
-end)
-
-ShopSection:AddButton("Buy Enchant Relic", function()
-    if not buttonEnabled then
-        warn("Button is currently disabled!")
-        return
-    end
-
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-
-    if not humanoidRootPart then
-        warn("HumanoidRootPart not found!")
-        return
-    end
-
-    local previousPosition = humanoidRootPart.Position
-
-
-    local targetPosition = Vector3.new(-931.525, 223.784, -986.849)
-    humanoidRootPart.CFrame = CFrame.new(targetPosition)
-
-    local success, err = pcall(function()
-        local merlin = workspace:WaitForChild("world"):WaitForChild("npcs"):WaitForChild("Merlin"):WaitForChild("Merlin"):WaitForChild("power")
-        if merlin then
-            merlin:InvokeServer()
-        else
-            warn("Merlin power function not found!")
-        end
-    end)
-
-    if not success then
-        warn("Error invoking Merlin power:", err)
-    end
-
-    task.wait(0.1) 
-
-    humanoidRootPart.CFrame = CFrame.new(previousPosition)
-end)
-
-task.delay(5, function()
-    buttonEnabled = true
-    print("Button is now enabled!")
-end)
-
-	Teleports:AddButton(
-    "Goto GPS Position",
-    function()
-        NEVERLOSE:KeySystem(
-            "Put position like this WITHOUT SPACES: X,Y,Z",
-            "",
-            FischUser.TPToPos
-        ):Callback(function()end)
-    end
-    )
-
-    local MegHunt = MegaladonHunting:AddSection("Hunting", "left")
-
-    local HuntOrNo = MegHunt:AddToggle("Hunt Priorities", false, UI.MegaladonHunting)
-	MegHunt:AddButton("Add Fish To List", function() 
-		Internal.Pr = Internal.Pr + 1
-		local Section = MegaladonHunting:AddSection("Priority "..tostring(Internal.Pr), "right")
-		local Rod = Section:AddLabel("Rod: None")
-		local Fish = Section:AddLabel("Fish: None")
-		Options.Priorities[Internal.Pr] = {Fish = "Nothing lol", Rod = "None"}
-		Section:AddButton("Change Rod To Current Rod", function() 
-			Options.Priorities[Internal.Pr].Rod = CalibrationData.FishingRod
-            Rod:Text("Rod: "..CalibrationData.FishingRod)
-        end)
-		Section:AddButton("Set Fish",function()
-			NEVERLOSE:KeySystem(
-					"Type Fish Name In, MAKE SURE TO SPELL IT RIGHT",
-					"",
-					function(a)
-						Options.Priorities[Internal.Pr].Fish = a 
-                        Fish:Text("Fish: "..a)
-						return true
-					end
-				):Callback(function()end)
-		end)
-	end)
-
-    CreditsSection:AddLabel("Fisch Ronix Hub Script by dynamicarrays, bdokkx")
-    CreditsSection:AddButton(
-        "Copy Discord Link",
-        function()
-            setclipboard("discord.gg/ronix")
-            Notification:Notify("Copied","Copied","Copied discord link to clipboard",4)
-        end
-    )
-
-    local AbundanceZoneSection = FishingTab:AddSection("Abundances", "right")
-    
-    local Ab = {}
-
-    local Ab2 = {}
-
-    local Choice = nil
-
-    local LabeledChance = nil
-
-    local AbundanceChoice = AbundanceZoneSection:AddDropdown("Abundances", Ab, "Loading", function(D)
-        LabeledChance:Text("Chance: "..tostring(Ab2[D].Chance).."%")
-        Choice = Ab2[D]
-    end)
-
-    LabeledChance = AbundanceZoneSection:AddLabel("Chance: 0%")
-
-    local GotoAbundance = AbundanceZoneSection:AddButton("Go to Abundance", function() 
-        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(Choice.Position.X, 137.77, Choice.Position.Z)
-    end)
-    local TweenService = game:GetService("TweenService")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local VirtualUser = game:GetService("VirtualUser")
-    local RunService = game:GetService("RunService")
-    
-
-local Config = _G.Config or {}
-local AllFuncs = {}
-
-Config['Farm Fish'] = false
-
-local AutofarmButton = AbundanceZoneSection:AddButton("Autofarm selected fish", function()
-    if not Choice then
-        warn("No abundance selected.")
-        return
-    end
-
-    local targetPosition = Vector3.new(Choice.Position.X, 137.77, Choice.Position.Z)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Position = targetPosition
-
-    local blockPosition = Vector3.new(targetPosition.X, targetPosition.Y - 5, targetPosition.Z)
-    local block = Instance.new("Part")
-    block.Position = blockPosition
-    block.Size = Vector3.new(5, 1, 5)
-    block.Anchored = true
-    block.Color = Color3.new(0, 1, 0)
-    block.Name = "AutoFarmBlock"
-    block.Parent = workspace
-
-    if not Config['Farm Fish'] then
-        print("Starting Farm Fish...")
-        Config['Farm Fish'] = true
-        AllFuncs['Farm Fish'](block) 
-    else
-        print("Farm Fish is already running.")
-    end
-end)
-
-AllFuncs['Farm Fish'] = function(block)
-    local player = game.Players.LocalPlayer
-    local RodName = game.ReplicatedStorage.playerstats[player.Name].Stats.rod.Value
-
-    while Config['Farm Fish'] and task.wait() do
- 
-        if Backpack:FindFirstChild(RodName) then
-            player.Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
-        end
-
-        if player.Character:FindFirstChild(RodName) and player.Character[RodName]:FindFirstChild("bobber") then
-
-            repeat
-                pcall(function()
-                    player.PlayerGui:FindFirstChild("shakeui").safezone:FindFirstChild("button").Size = UDim2.new(1001, 0, 1001, 0)
-                    VirtualUser:Button1Down(Vector2.new(1, 1))
-                    VirtualUser:Button1Up(Vector2.new(1, 1))
-                end)
-                RunService.Heartbeat:Wait()
-            until not Config['Farm Fish'] or not player.Character:FindFirstChild(RodName) or player.Character[RodName].values.bite.Value
-
-            repeat
-                if game.ReplicatedStorage:FindFirstChild("events") and game.ReplicatedStorage.events:FindFirstChild("reelfinished") then
-                    game.ReplicatedStorage.events.reelfinished:FireServer(1000000000000000000000000, true)
-                end
-                task.wait(0.5)
-            until not Config['Farm Fish'] or not player.Character:FindFirstChild(RodName) or not player.Character[RodName].values.bite.Value
-        else
-
-            if player.Character:FindFirstChild(RodName) then
-                player.Character[RodName].events.cast:FireServer(1000000000000000000000000)
-                task.wait(2)
-            end
-        end
-    end
-
-    if block and block.Parent then
-        block:Destroy()
-    end
-    print("Farm Fish loop has exited.")
-end
-
-
-AbundanceZoneSection:AddButton("Stop AutoFarm", function()
-    Config['Farm Fish'] = false
-    print("AutoFarm has been stopped.")
-
-    local block = workspace:FindFirstChild("AutoFarmBlock")
-    if block then
-        block:Destroy()
-    end
-end)
-
-    local FishRadarPlaces = {}
-
-    local I = 0
-
-    while I < 100 do
-        I = I + 1
-        FishingTab:AddSection("Scrolling Space", "right")
-    end
-
-    while task.wait(5) do
-        local Places = FischAPI.GetAllAbundanceZones()
-        Ab2 = Places
-        Ab = {}
-        for Fish, Info in pairs(Ab2) do
-            table.insert(Ab, Fish)
-        end
-		FischUser.CheckForAbundancesInPriorityListAndTakeAction()
-        AbundanceChoice:Refresh(Ab)
-    end
-end
-
---Utils
-
-function Utils.Overlap(gui1, gui2)
-    local gui1_topLeft = gui1.AbsolutePosition
-    local gui1_bottomRight = gui1_topLeft + gui1.AbsoluteSize
-
-    local gui2_topLeft = gui2.AbsolutePosition
-    local gui2_bottomRight = gui2_topLeft + gui2.AbsoluteSize
-    
-    return ((gui1_topLeft.x < gui2_bottomRight.x and gui1_bottomRight.x > gui2_topLeft.x) and (gui1_topLeft.y < gui2_bottomRight.y and gui1_bottomRight.y > gui2_topLeft.y))
-end
-
-function Utils.SendWebhookData(Link, Text)
-    local DataForm = Text
-    local maxLength = 1950
-    local chunks = {}
-    local HttpService = game:GetService("HttpService")
-
-    while #DataForm > 0 do
-        local chunk = DataForm:sub(1, maxLength)
-        if #DataForm > maxLength then
-            local lastNewline = chunk:match(".*\n()")
-            if lastNewline then
-                chunk = DataForm:sub(1, lastNewline - 1)
-            end
-        end
-        table.insert(chunks, chunk)
-        DataForm = DataForm:sub(#chunk + 1)
-    end
-
-    for i, chunk in chunks do
-        local data = {
-            content = chunk
-        }
-        
-        request({
-            Url = Link,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = HttpService:JSONEncode(data)
+        Fluent:Notify({
+            Title = "Tween Player",
+            Content = "Đang tween đến player...",
+            Duration = 3
         })
+        tweenBoatToPlayer(selectedPlayer) -- Gọi hàm tweenBoatToPlayer đã sửa đổi
     end
-end
+})
 
-function Utils.Split(str, sep)
-	local result = {}
-	local regex = ("([^%s]+)"):format(sep)
-	for each in str:gmatch(regex) do
-	   table.insert(result, each)
-	end
-	return result
- end
+-- Hàm để đóng hoặc thu nhỏ cửa sổ (toggle)
+local minimized = false
+local function toggleMinimize()
+    minimized = not minimized
+    if minimized then
+        Window:SetSize(UDim2.fromOffset(160, 60)) -- Adjust for a smaller minimized size
+        Window:SetProperty("Acrylic", false)
 
---VI
-
-VI.State = false
-
-function VI.ClickUI(ui)
-    local x = ui.AbsolutePosition.X + (ui.AbsoluteSize.X / 2)
-    local y = ui.AbsolutePosition.Y + (ui.AbsoluteSize.Y / 2)
-    VIM:SendMouseButtonEvent(x, y, 0, true, game, 0)
-    task.wait(0.05)
-    VIM:SendMouseButtonEvent(x, y, 0, false, game, 0)
-end
-
-function VI.Down(ui)
-    VI.State = true
-    local x = ui.AbsolutePosition.X + (ui.AbsoluteSize.X / 2)
-    local y = ui.AbsolutePosition.Y + (ui.AbsoluteSize.Y / 2)
-    VIM:SendMouseButtonEvent(x, y, 0, true, game, 0)
-end
-
-function VI.Up(ui)
-    VI.State = false
-    local x = ui.AbsolutePosition.X + (ui.AbsoluteSize.X / 2)
-    local y = ui.AbsolutePosition.Y + (ui.AbsoluteSize.Y / 2)
-    VIM:SendMouseButtonEvent(x, y, 0, false, game, 0)
-end
-
-
-
-Config = _G.Config or {}  
-Config['Farm Fish'] = false  
-
-local Players = game.Players
-local LocalPlayer = Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local Backpack = LocalPlayer.Backpack
-local PlayerGui = LocalPlayer.PlayerGui
-local VirtualUser = game:GetService("VirtualUser")
-local RodName = ReplicatedStorage.playerstats[LocalPlayer.Name].Stats.rod.Value
-
--- Fish Auto Farm diddy
-AllFuncs = {}
-
-AllFuncs['Farm Fish'] = function()
-    while Config['Farm Fish'] and task.wait() do
-        if Backpack:FindFirstChild(RodName) then
-            LocalPlayer.Character.Humanoid:EquipTool(Backpack:FindFirstChild(RodName))
+        -- Ẩn tất cả các tab
+        for _, tab in ipairs(Window:GetTabs()) do
+            tab:SetProperty("Visible", false)
         end
-        if LocalPlayer.Character:FindFirstChild(RodName) and LocalPlayer.Character[RodName]:FindFirstChild("bobber") then
-            repeat
-                pcall(function()
-                    PlayerGui:FindFirstChild("shakeui").safezone:FindFirstChild("button").Size = UDim2.new(1001, 0, 1001, 0)
-                    VirtualUser:Button1Down(Vector2.new(1, 1))
-                    VirtualUser:Button1Up(Vector2.new(1, 1))
-                end)
-                RunService.Heartbeat:Wait()
-            until not LocalPlayer.Character:FindFirstChild(RodName) or LocalPlayer.Character[RodName].values.bite.Value or not Config['Farm Fish']
 
-            repeat
-                ReplicatedStorage.events.reelfinished:FireServer(1000000000000000000000000, true)
-                task.wait(0.5)
-            until not LocalPlayer.Character:FindFirstChild(RodName) or not LocalPlayer.Character[RodName].values.bite.Value or not Config['Farm Fish']
-        else
-            if LocalPlayer.Character:FindFirstChild(RodName) then
-                LocalPlayer.Character[RodName].events.cast:FireServer(1000000000000000000000000)
-                task.wait(2)
-            end
-        end
-    end
-end
+        Window.TitleBar:SetProperty("Visible", false)
+        Window.SubTitleLabel:SetProperty("Visible", false)
 
---Teleport Service for speds
-AllFuncs.HopServer = function(FullServer) 
-	local FullServer = FullServer or false
-
-	local Http = game:GetService("HttpService")
-	local Api = "https://games.roblox.com/v1/games/"
-
-	local _place = game.PlaceId
-	local _servers = Api.._place.."/servers/Public?sortOrder=Asc&limit=100"
-	local ListServers = function (cursor)
-		local Raw = game:HttpGet(_servers .. ((cursor and "&cursor="..cursor) or ""))
-		return Http:JSONDecode(Raw)
-	end
-
-	local Server, Next; repeat
-		local Servers = ListServers(Next)
-		Server = Servers.data[1]
-		Next = Servers.nextPageCursor
-	until Server
-	repeat
-		if not FullServer then
-			game:GetService("TeleportService"):TeleportToPlaceInstance(_place,Server.id,game.Players.LocalPlayer)
-		else
-			if request then
-				local servers = {}
-				local req = request(
-					{
-						Url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true", game.PlaceId)
-					}
-				).Body;
-				local body = game:GetService("HttpService"):JSONDecode(req)
-				if body and body.data then
-					for i, v in next, body.data do
-						if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.JobId then
-							table.insert(servers, 1, v.id)
-						end
-					end
-				end
-				if #servers > 0 then
-					game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game.Players.LocalPlayer)
-				else
-					return "Couldn't find a server."
-				end
-			end
-		end
-		wait()
-	until game.PlaceId ~= game.PlaceId
-end
-
-function ExportValue(arg1, arg2)
-    return tonumber(string.format("%." .. (arg2 or 1) .. 'f', arg1))
-end
-AllFuncs['Farm Fish']()
-
-
-function FischAPI.RepairMap()
-	workspace.world.npcs["Jack Marrow"].treasure.repairmap:InvokeServer()
-end
-
-function FischAPI.InstantReel()
-    game:GetService("ReplicatedStorage").events.reelfinished:FireServer(100, true)
-end
-
-function FischAPI.Cast()
-    game.Players.LocalPlayer.Character[CalibrationData.FishingRod].events.cast:FireServer(100,1)
-end
-
-function FischAPI.GetAllAbundanceZones()
-    local Abundances = {}
-    for i, Zone in pairs(game:GetService("Workspace").zones.fishing:GetChildren()) do
-        local Info = {}
-        if Zone:FindFirstChild("Abundance") then
-            if Zone:FindFirstChild("Abundance"):FindFirstChild("Chance") then
-                Info.Chance = Zone.Abundance.Chance.Value
-            else
-                Info.Chance = 1
-            end
-            Info.Position = Zone.Position
-            if Abundances[Zone.Abundance.Value] == nil then
-                Abundances[Zone.Abundance.Value] = Info
-            elseif Abundances[Zone.Abundance.Value].Chance < Info.Chance then
-                Abundances[Zone.Abundance.Value] = Info
-            end
-        end
-    end
-    return Abundances
-end
-
-function FischAPI.SellAll()
-    workspace.world.npcs["Marc Merchant"].merchant.sellall:InvokeServer()
-end
-
-function FischAPI.InitializePossibleDetections(Power)
-    --This is just for guidement, don't use this function lol IT'S NOT USELESS STOP BEING MEAN!
-    game:GetService("ReplicatedStorage").modules.fishing.rodresources.events.cast:FireServer(Power,1)
-end
--- did you know that bdokkx scams kids yea yea dynamicarrays
-function FischAPI.DetermineClickActionMinigame()
-
-end
-
-function FischAPI.GetFish()
-    local Text = "Items/Fish:\n"
-    for i, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
-        Text=Text..v.Name.."\n"
-    end
-    return Text
-end
---bro bdokkx is a nexam developer / Ronix Arsenal V1.0 - discord.gg/ronix
---User
-
-function FischUser.CheckForAbundancesInPriorityListAndTakeAction()
-	local Oppurtunities = FischAPI.GetAllAbundanceZones()
-	local MostImportant = math.huge
-	local MostImportantFish = "Nothing Lol"
-	for Importance, Data in pairs(Options.Priorities) do
-		if Importance < MostImportant then
-			if Oppurtunities[Data.Fish] then
-				MostImportant = Importance
-				MostImportantFish = Data.Fish
-				Internal.RodToBeEquipped = Data.Tool
-				Internal.FishHunted = MostImportantFish
-			end
-		end
-	end
-	if MostImportantFish == "Nothing Lol" then
-		Internal.Megaladon = false
-		Internal.MegaladonPosition = nil
-		pcall(function()  
-			Internal.MegHuntPlat:Destroy()
-		end)
-	else
-		Internal.Megaladon = true
-		Internal.MegaladonPosition = Oppurtunities[MostImportantFish].Position
-	end
-	return MostImportantFish
-end
-
-function FischUser.AutoTotem()
-	for i, v in pairs(game.Players.LocalPlayer.Character:GetChildren()) do
-		if v:IsA("Tool") then
-			v:Activate()
-		end
-	end
-end
-
-function FischUser.TPToPos(pos)
-	local Temp = Utils.Split(pos, ",")
-	local New = {}
-	for i, v in pairs(Temp) do
-		New[i] = tonumber(v)
-	end
-	game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(unpack(New))
-    return true
-end
-
-function FischUser.TPToPoXYZ(pos)
-	local Temp = Utils.Split(pos, ", ")
-	for i, v in pairs(Temp) do
-        print(i,v)
-    end
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(tonumber(Temp[2]), Temp[4], tonumber(Temp[6]))
-end
-
-function FischUser.Sell()
-    FischAPI.SellAll()
-end
-
-function FischUser.AutoShake()
-    FischAPI.TapShake()
-end
-
-function FischUser.RepairMap()
-	FischAPI.RepairMap()
-end
-
-function FischUser.TPMap()
-    FischUser.TPToPoXYZ(game:GetService("Players").rbxDistribution.PlayerGui["Treasure Map"].Main.CoordinatesLabel.Text)
-end
-
-function FischUser.OpenBoatUI()
-    game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.shipwright.Visible = not game:GetService("Players").LocalPlayer.PlayerGui.hud.safezone.shipwright.Visible
-end
-
-function FischUser.LockPosition()
-    if Internal.Megaladon == true then
-        if Options.MegaladonHunting == true then
-            game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Internal.MegHuntPos
-            return
-        end
-    end
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Internal.LockedPosition
-end
-
-function FischUser.FloatOnWater()
-    pcall(function()
-        Internal.FloatPart:Destroy()
-    end)
-    Internal.FloatPart = Instance.new("Part", workspace)
-    Internal.FloatPart.Anchored = true
-    Internal.FloatPart.Size = Vector3.new(10,1,10)
-    Internal.FloatPart.Position = Vector3.new(game.Players.LocalPlayer.Character.HumanoidRootPart.Position.X, 133.77, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z)
-    game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(game.Players.LocalPlayer.Character.HumanoidRootPart.Position.X, 150, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z)
-end
-
-function FischUser.AutoMinigame()
-    local action = FischAPI.DetermineClickActionMinigame()
-    local PlayerBar = game:GetService("Players").LocalPlayer.PlayerGui.reel.bar.playerbar
-    if action == true then
-        if VI.State == false then
-            VI.Down(PlayerBar)
-        end
     else
-        if VI.State == true then
-            VI.Up(PlayerBar)
+        Window:SetSize(UDim2.fromOffset(580, 460)) -- Restore original size
+        Window:SetProperty("Acrylic", true)
+        for _, tab in ipairs(Window:GetTabs()) do
+            tab:SetProperty("Visible", true)
         end
+
+        Window.TitleBar:SetProperty("Visible", true)
+        Window.SubTitleLabel:SetProperty("Visible", true)
     end
 end
-
-function FischUser.SecondUpdateWebhook()
-    local a, b = pcall(function()
-        Internal.Timer = Internal.Timer + 1
-        if Internal.Timer >= 300 then
-            Internal.Timer = 0
-            local Data = FischAPI.GetFish()
-            Utils.SendWebhookData(Options.WebhookURL, Data)
-            Notification:Notify("info", 
-                "Webhook Notification Sent",
-                "The next webhook notification is in 5 minutes."            )
-        end
-    end)
-    print(a, b)
+Window.MinimizeKeybind = toggleMinimize
+while true do task.wait(0.00001) 
+print("Ey yo skider")
 end
-
-function FischUser.AutoCast()
-    FischAPI.Cast()
-end
-
-function FischUser.AutoReel()
-    FischAPI.InstantReel()
-end
-
-function FischUser.StepLoop()
-    if Options.FloatOnWater == true then
-        pcall(function()
-            FischUser.FloatOnWater()
-        end)
-    end
-    if Options.AutoShake == true then
-        pcall(function()
-            FischUser.AutoShake()
-        end)
-    end
-    if Options.AutoMinigameBlatant == true then
-        pcall(function()
-            FischUser.AutoReel()
-        end)
-    end
-	if Options.AutoTotem == true then
-		pcall(FischUser.AutoTotem)
-	end
-end
-
-function FischUser.MegaladonHuntInstant()
-    if Internal.Megaladon == true then
-        if Internal.MegHuntPlat then
-            return
-        end
-		if Options.PriorityWebhook == true then
-			Utils.SendWebhookData(Options.WebhookURL, "FISH PRIORITY EVENT - "..Internal.FishHunted)
-		end
-        repeat task.wait() until game:GetService("Players").LocalPlayer.PlayerGui:FindFirstChild("reel") == nil
-		game.Players.LocalPlayer.Character.Humanoid:UnequipTools()
-		game:GetService("ReplicatedStorage").events.equiprod:FireServer(Internal.RodToBeEquipped)
-		task.wait(1)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(Internal.MegaladonPosition.X, 500.77, Internal.MegaladonPosition.Z)
-        Internal.MegHuntPlat = Instance.new("Part", workspace)
-        Internal.MegHuntPlat.Anchored = true
-        Internal.MegHuntPlat.Size = Vector3.new(10,1,10)
-        Internal.MegHuntPlat.Position = Vector3.new(game.Players.LocalPlayer.Character.HumanoidRootPart.Position.X, 133.77, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z)
-        game.Players.LocalPlayer.Character.HumanoidRootPart.Position = Vector3.new(game.Players.LocalPlayer.Character.HumanoidRootPart.Position.X, 150, game.Players.LocalPlayer.Character.HumanoidRootPart.Position.Z)
-		task.wait(5)
-        game.Players.LocalPlayer.Character.Humanoid:EquipTool(game.Players.LocalPlayer.Backpack[CalibrationData.FishingRod])
-        Internal.MegHuntPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
-    end
-end
-
-function FischUser.Heartbeat()
-    CalibrationData.FishingRod = game:GetService("ReplicatedStorage").playerstats[tostring(game.Players.LocalPlayer.Name)].Stats.rod.Value
-end
-
-function FischUser.OneStep()
-
-end
-
-function FischUser.Relaxed1Sec()
-    if Options.WebhookNotifications == true then
-        pcall(function()
-            FischUser.SecondUpdateWebhook()
-        end)
-    end
-    if Options.AutoCast == true then
-        pcall(function()
-            if Options.Lock == true then
-                FischUser.LockPosition()
-            end
-            FischUser.AutoCast()
-        end)
-    end
-    if Options.MegaladonHunting == true then
-        pcall(function()
-            FischUser.MegaladonHuntInstant()
-        end)
-    end
-	if Options.AutoMap == true then
-		pcall(FischUser.RepairMap)
-        pcall(FischUser.TPMap)
-	end
-end
-
-function FischUser.Initialize()
-    spawn(function()
-        game:GetService("RunService").RenderStepped:Connect(function()
-            FischUser.Heartbeat()
-        end)
-    end)
-    spawn(function()
-        FischUser.OneStep()
-    end)
-    spawn(function()
-        while task.wait(0.005) do
-            pcall(function()
-                FischUser.StepLoop()
-            end)
-        end
-    end)
-    spawn(function()
-        while task.wait(1) do
-            FischUser.Relaxed1Sec()
-        end
-    end)
-end
-    
-CalibrationData.Positions = {}
-for i, v in game:GetService("Workspace").active["OceanPOI's"]:GetChildren() do
-    CalibrationData.Positions[v.Name] = v.Position
-end
-for i, v in game:GetService("Workspace").zones.player:GetChildren() do
-    CalibrationData.Positions[v.Name] = v.Position
-end
-
-task.spawn(function(InitializeService)
-    warn("ANTI AFK STARTING")
-    pcall(function()
-        for i,v in pairs(getconnections(Client.Idled)) do
-            v:Disable() 
-        end
-        Client.Idled:connect(function()
-            game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-            wait(1)
-            game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        end)
-        while wait(300) do
-            game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-            wait(1)
-            game:GetService("VirtualUser"):Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        end
-    end)
-end)
-
-FischUser.Initialize()
-UI.Initialize()
---bdokkx on top more lines = better?
