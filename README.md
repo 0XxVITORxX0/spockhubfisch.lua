@@ -4,14 +4,14 @@
 local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
 -- Âm thanh khởi động
 local startupSound = Instance.new("Sound")
-startupSound.SoundId = "rbxassetid://8594342648"
+startupSound.SoundId = "rbxassetid://81720963182969"
 startupSound.Volume = 5 -- Điều chỉnh âm lượng nếu cần
 startupSound.Looped = false -- Không lặp lại âm thanh
 startupSound.Parent = game.CoreGui-- Đặt parent vào CoreGui để đảm bảo âm thanh phát
 startupSound:Play() -- Phát âm thanh khi script chạy
 -- Tạo cửa sổ chính
 local Window = Library:CreateWindow{
-    Title = "Spock Hub",
+    Title = "Spock Hub version find volcano",
     SubTitle = "https://discord.gg/EewSkNM6",
     TabWidth = 160,
     Size = UDim2.fromOffset(1280, 860),
@@ -90,8 +90,8 @@ end)
 -- Tạo các tab
 local MainTab = Window:AddTab({ Title = "Main", Icon = "" })
 local PlayerTab = Window:AddTab({ Title = "Player", Icon = "" })
-local IslandTab = Window:AddTab({ Title = "Đảo 🏝️", Icon = "" })
-local OtherTab = Window:AddTab({ Title = "Khác", Icon = "" })
+local IslandTab = Window:AddTab({ Title = "Island", Icon = "" })
+local OtherTab = Window:AddTab({ Title = "Other", Icon = "" })
 local FruitTab = Window:AddTab({ Title = "Fruit", Icon = "" }) -- Tab Fruit mới
 
 -- Biến toàn cục
@@ -528,8 +528,8 @@ local gasEnabled = false
 -- Hàm hiển thị thông báo
 local function notify(title, text)
     StarterGui:SetCore("SendNotification", {
-        Title = title;
-        Text = text;
+        Title = spock hub ben loaded;
+        Text = spock hub on top;
         Duration = 3; -- Thời gian hiển thị thông báo
     })
 end
@@ -866,8 +866,8 @@ end
 
 -- Tab Main
 MainTab:AddToggle("LevithanToggle", {
-    Title = "Tìm Levithan và 🌋",
-    Description = "Bật/Tắt tìm Levithan và 🌋",
+    Title = "Find Levithan and vulcano",
+    Description = "Enable/Disable Levithan search and vulcano",
     Callback = function(Value)
         if Value then -- Toggle is ON
             if not scriptEnabled then -- Only start if not already enabled
@@ -883,24 +883,24 @@ MainTab:AddToggle("LevithanToggle", {
 })
 
 MainTab:AddToggle("Khóa", {
-    Title = "Bay Thuyền ⛵",
-    Description = "Bật/Tắt khóa Bay ⛵",
+    Title = "flying Boat",
+    Description = "Enable/Disable Flight Lock",
     Callback = function(Value)
         lockHeightMode = Value
     end
 })
 
 MainTab:AddToggle("Rock", {
-    Title = "Phá đá",
-    Description = "Bật/Tắt phá đá liên tục",
+    Title = "Breaking rocks",
+    Description = "Continuous ice breaking on/off",
     Callback = function(Value)
         setRockDestruction(Value) --  <- This line calls the setRockDestruction function NOW.
     end
 })
 
 MainTab:AddInput("Y", {
-    Title = "Độ cao Bay",
-    Description = "Nhập độ cao ",
+    Title = "Flying Altitude",
+    Description = "Enter altitude",
     Callback = function(Value)
         local val = tonumber(Value)
         if val then
@@ -912,8 +912,8 @@ MainTab:AddInput("Y", {
 })
 
 MainTab:AddInput("Speed", {
-    Title = "Tốc độ",
-    Description = "Nhập tốc độ tween",
+    Title = "Speed",
+    Description = "Enter tween speed",
     Callback = function(Value)
         local val = tonumber(Value)
         if val and val > 0 then
@@ -925,8 +925,8 @@ MainTab:AddInput("Speed", {
 })
 
 MainTab:AddToggle("Auto Return", {
-    Title = "Tự động trở về ⛵",
-    Description = "Bật/Tắt tự động trở về ⛵",
+    Title = "Automatically return",
+    Description = "Auto return on/off",
     Callback = function(Value)
         autoReturnEnabled = Value
         if autoReturnEnabled then
@@ -936,8 +936,8 @@ MainTab:AddToggle("Auto Return", {
 })
 
 MainTab:AddToggle("Kill Aura", {
-    Title = "Golem và Quái tự chết",
-    Description = "Bật/Tắt Kill Aura",
+    Title = "Golem and Monster Killed",
+    Description = "Kill Aura",
     Callback = function(Value)
         killAuraEnabled = Value
         if killAuraEnabled then
@@ -948,17 +948,17 @@ MainTab:AddToggle("Kill Aura", {
 
 -- Tab Player
 local playerDropdown = PlayerTab:AddDropdown("Chọn người chơi", {
-    Title = "Chọn người chơi",
-    Description = "Danh sách người chơi",
+    Title = "Select players",
+    Description = "List of players",
     Values = {}, -- Danh sách người chơi sẽ được cập nhật sau
     Callback = function(Value)
         local selected = Players:FindFirstChild(Value)
         if selected then
             selectedPlayer = selected
-            print("Đã chọn người chơi:", Value)
+            print("Selected player:", Value)
         else
             selectedPlayer = nil
-            print("Không tìm thấy người chơi: ", Value)
+            print("Player not found:", Value)
         end
     end
 })
@@ -975,9 +975,9 @@ local function refreshPlayerList()
 end
 
 -- Thêm TextBox để tìm tên người chơi
-local playerSearchBox = PlayerTab:AddInput("Tìm người chơi", {
-    Title = "Tìm người chơi",
-    Description = "Nhập tên người chơi để tìm kiếm",
+local playerSearchBox = PlayerTab:AddInput("Find players", {
+    Title = "Find players",
+    Description = "Enter player name to search",
     Callback = function(Value)
         -- Lọc danh sách người chơi dựa trên từ khóa
         local filteredPlayers = {}
@@ -993,7 +993,7 @@ local playerSearchBox = PlayerTab:AddInput("Tìm người chơi", {
 -- Nút Refresh
 PlayerTab:AddButton({
     Title = "Refresh",
-    Description = "Làm mới danh sách người chơi",
+    Description = "Refresh player list",
     Callback = function()
         refreshPlayerList()
     end
@@ -1003,20 +1003,20 @@ PlayerTab:AddButton({
 refreshPlayerList()
 
 -- Tab Đảo
-local islandDropdown = IslandTab:AddDropdown("Chọn đảo", {
-    Title = "Chọn đảo",
-    Description = "Danh sách đảo",
-    Values = {"Tiki", "Hydra", "Pháo đài", "Dinh Thự", "Lâu Đài Bóng Tối", "Cảng", "Cây Đại Thụ", "Đảo Bánh"},
+local islandDropdown = IslandTab:AddDropdown("Select island", {
+    Title = "Select island",
+    Description = "List of islands",
+    Values = {"Tiki", "Hydra", "Fortress", "Mansion", "Dark Castle", "Port", "Big Tree", "Cake Island"},
     Callback = function(Value)
         selectedIslandCoord = islands[Value] -- Lưu tọa độ đảo được chọn
-        print("Đã chọn đảo:", Value)
+        print("Island selected:", Value)
     end
 })
 
 -- Thêm TextBox để tìm tên đảo
-local islandSearchBox = IslandTab:AddInput("Tìm đảo", {
-    Title = "Tìm đảo",
-    Description = "Nhập tên đảo để tìm kiếm",
+local islandSearchBox = IslandTab:AddInput("Find the island", {
+    Title = "Find the island",
+    Description = "Enter island name to search",
     Callback = function(Value)
         -- Lọc danh sách đảo dựa trên từ khóa
         local filteredIslands = {}
@@ -1032,28 +1032,28 @@ local islandSearchBox = IslandTab:AddInput("Tìm đảo", {
 -- Nút Tween đến đảo
 IslandTab:AddButton({
     Title = "Tween: OFF",
-    Description = "Bật/Tắt tween đến đảo",
+    Description = "Tween to island on/off",
     Callback = function()
         if islandTweening then
-            stopTween("Người dùng tắt Tween Đảo.")
+            stopTween("User turns off Tween Island.")
             islandTweening = false
             Fluent:Notify({
-                Title = "Tween Đảo",
-                Content = "Đã tắt Tween Đảo.",
+                Title = "Tween Island",
+                Content = "Tween Island is off.",
                 Duration = 3
             })
         else
             if not selectedIslandCoord then
                 Fluent:Notify({
-                    Title = "Lỗi",
-                    Content = "Chưa chọn đảo!",
+                    Title = "Error",
+                    Content = "Haven't selected an island yet!",
                     Duration = 3
                 })
                 return
             end
             islandTweening = true
             Fluent:Notify({
-                Title = "Tween Đảo",
+                Title = "Tween Island",
                 Content = "Đang tween đến đảo...",
                 Duration = 3
             })
@@ -1064,8 +1064,8 @@ IslandTab:AddButton({
 
 -- Nút Tween đến Hydra
 IslandTab:AddToggle("HydraIslandToggle", {
-    Title = "Kéo tim đến Hydra",
-    Description = "Bật/Tắt Kéo Tim đến Hydra",
+    Title = "Pull the heart to Hydra",
+    Description = "Enable/Disable Drag Heart to Hydra",
     Callback = function(Value)
         if Value then -- Bật
             islandTweening = true
@@ -1076,11 +1076,11 @@ IslandTab:AddToggle("HydraIslandToggle", {
             })
             tweenBoatToVector3(islands["Hydra"])
         else -- Tắt
-            stopTween("Người dùng tắt Tween đến Hydra.")
+            stopTween("User disables Tween to Hydra.")
             islandTweening = false
             Fluent:Notify({
-                Title = "Tween đến Hydra",
-                Content = "Đã tắt Tween đến Hydra.",
+                Title = "Tween to Hydra",
+                Content = "Tween off to Hydra.",
                 Duration = 3
             })
         end
@@ -1089,19 +1089,19 @@ IslandTab:AddToggle("HydraIslandToggle", {
 
 -- Nút Tween đến Tiki
 IslandTab:AddToggle("TikiIslandToggle", {
-    Title = "Kéo tim đến tiki",
-    Description = "Bật/Tắt Kéo Tim Tiki",
+    Title = "Drag heart to tiki",
+    Description = "Enable/Disable Tiki Heart Drag",
     Callback = function(Value)
         if Value then -- Bật
             islandTweening = true
             Fluent:Notify({
                 Title = "Tween đến Tiki",
-                Content = "Đang tween đến Tiki...",
+                Content = "Tween coming to Tiki...",
                 Duration = 3
             })
             tweenBoatToVector3(islands["Tiki"])
         else -- Tắt
-            stopTween("Người dùng tắt Tween đến Tiki.")
+            stopTween("User turns off Tween to Tiki.")
             islandTweening = false
             Fluent:Notify({
                 Title = "Tween đến Tiki",
@@ -1115,7 +1115,7 @@ IslandTab:AddToggle("TikiIslandToggle", {
 -- Tab Khác
 OtherTab:AddToggle("Anti Die", {
     Title = "Anti Die",
-    Description = "Anti die chỉ có hiệu lực khi HP=30%",
+    Description = "Anti die is only effective when HP=30%",
     Callback = function(Value)
         antiDieEnabled = Value
         if not antiDieEnabled and originalPosition then
@@ -1134,7 +1134,7 @@ OtherTab:AddToggle("Anti Die", {
 
 OtherTab:AddToggle("DashNoCD", {
     Title = "DashNoCD",
-    Description = "Bật/Tắt DashNoCD",
+    Description = "DashNoCD",
     Callback = function(Value)
         dashNoCDEnabled = Value
         _G.DodgewithoutCool = dashNoCDEnabled
@@ -1146,7 +1146,7 @@ OtherTab:AddToggle("DashNoCD", {
 
 OtherTab:AddToggle("WalkSpeed", {
     Title = "WalkSpeed",
-    Description = "Bật/Tắt WalkSpeed",
+    Description = "WalkSpeed",
     Callback = function(Value)
         walkSpeedEnabled = Value
         tpwalking = walkSpeedEnabled
@@ -1158,10 +1158,10 @@ OtherTab:AddToggle("WalkSpeed", {
 
 OtherTab:AddToggle("Gas", {
     Title = "Gas",
-    Description = "Dành riêng cho Developer",
+    Description = "Exclusively for Developers",
     Callback = function(Value)
         local playerName = player.Name
-        if playerName == "caubetoi4" then -- Kiểm tra tên người chơi
+        if playerName == "VITORFFPRO123" then -- Kiểm tra tên người chơi
             gasEnabled = Value
             if gasEnabled then
                 createNoCooldownTool()
@@ -1187,8 +1187,8 @@ OtherTab:AddToggle("Gas", {
 
 -- Boat Protect Toggle
 OtherTab:AddToggle("BoatProtect", {
-    Title = "Bảo Vệ Thuyền 🔰",
-    Description = "Bật/Tắt Bảo Vệ Thuyền Khi HP=50%",
+    Title = "Boat Protection 🔰",
+    Description = "Enable/Disable Boat Protection When HP=50%",
     Callback = function(Value)
         boatProtectEnabled = Value
         if boatProtectEnabled then
@@ -1201,8 +1201,8 @@ OtherTab:AddToggle("BoatProtect", {
 
 -- Boat Protect Immediate Toggle
 OtherTab:AddToggle("BoatProtectImmediate", {
-    Title = "Bảo Vệ Thuyền Ngay Lập Tức",
-    Description = "Bật/Tắt Bảo Vệ Thuyền Ngay Lập Tức",
+    Title = "Protect Your Boat Immediately",
+    Description = "Instant Boat Protection On/Off",
     Callback = function(Value)
         boatProtectImmediateEnabled = Value
         if boatProtectImmediateEnabled then
@@ -1224,7 +1224,7 @@ OtherTab:AddToggle("BoatProtectImmediate", {
 -- Tab Fruit
 FruitTab:AddToggle("Find Fruit", {
     Title = "Find Fruit",
-    Description = "Tự động nhặt Fruit + Esp fruit",
+    Description = "Auto Pick Up Fruit + Esp Fruit",
     Callback = function(Value)
         findFruitEnabled = Value
         if not findFruitEnabled then
@@ -1242,7 +1242,7 @@ FruitTab:AddToggle("Find Fruit", {
 -- Auto Random Fruit Toggle
 FruitTab:AddToggle("Auto Random Fruit", {
     Title = "Auto Random Fruit",
-    Description = "Bật/Tắt tự động mua trái ác quỷ ngẫu nhiên",
+    Description = "Enable/Disable Auto Buy Random Devil Fruit",
     Callback = function(state)
         _G.Random_Auto = state
         if state then
@@ -1262,8 +1262,8 @@ FruitTab:AddToggle("Auto Random Fruit", {
 
 -- Tab Player - Nút Spectate
 PlayerTab:AddToggle("Spectate", {
-    Title = "Xem Player",
-    Description = "Bật/Tắt Xem Player",
+    Title = "See Player",
+    Description = "Player Spectate",
     Callback = function(Value)
         if Value then
             if selectedPlayer and selectedPlayer.Character then
@@ -1281,10 +1281,10 @@ PlayerTab:AddToggle("Spectate", {
 -- Nút Tween Player trong Tab "Player"
 PlayerTab:AddButton({
     Title = "Tween Player",
-    Description = "Tween boat đến Player đã chọn",
+    Description = "Tween boat to selected Player",
     Callback = function()
         if playerTweening then
-            stopTween("Người dùng tắt Tween Player.")
+            stopTween("User turns off Tween Player.")
             playerTweening = false
             Fluent:Notify({
                 Title = "Tween Player",
@@ -1295,15 +1295,15 @@ PlayerTab:AddButton({
         end
         if not selectedPlayer then
             Fluent:Notify({
-                Title = "Lỗi",
-                Content = "Chưa chọn player!",
+                Title = "Error",
+                Content = "No player selected yet!",
                 Duration = 3
             })
             return
         end
         Fluent:Notify({
             Title = "Tween Player",
-            Content = "Đang tween đến player...",
+            Content = "Tweening to player...",
             Duration = 3
         })
         tweenBoatToPlayer(selectedPlayer) -- Gọi hàm tweenBoatToPlayer đã sửa đổi
